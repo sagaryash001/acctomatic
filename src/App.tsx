@@ -11,6 +11,7 @@ import {
   LinkButton,
   Textarea,
 } from "@/components/ui";
+import { ContactModal, useContactModal } from "@/components/ContactModal";
 import { fadeInUp, stagger, viewportOnce } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,7 @@ export default function App() {
     offset: ["start end", "end end"],
   });
   const footerOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const contactModal = useContactModal();
 
   return (
     <>
@@ -84,12 +86,20 @@ export default function App() {
           <span className="text-lg font-semibold tracking-[-0.02em] text-white">
             acct<span className="gradient-text">omatic</span>
           </span>
-          <a
-            href="#get-started"
-            className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
-          >
-            Get Started
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={contactModal.open}
+              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
+            >
+              Contact Us
+            </button>
+            <a
+              href="#get-started"
+              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
+            >
+              Get Started
+            </a>
+          </div>
         </nav>
 
         <Section className="relative flex h-[calc(100%-72px)] items-center py-16">
@@ -295,9 +305,12 @@ export default function App() {
                   </h4>
                   <ul className="mt-4 space-y-3 text-sm">
                     <li>
-                      <a href="#get-started" className="text-background/70 transition-colors hover:text-background">
+                      <button
+                        onClick={contactModal.open}
+                        className="text-background/70 transition-colors hover:text-background"
+                      >
                         Contact
-                      </a>
+                      </button>
                     </li>
                   </ul>
                 </div>
@@ -310,6 +323,8 @@ export default function App() {
           </Section>
         </InvertedSection>
       </motion.div>
+
+      <ContactModal origin={contactModal.origin} onClose={contactModal.close} />
     </>
   );
 }
