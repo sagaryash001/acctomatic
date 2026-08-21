@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Acctomatic</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --electric-blue: #0984E3;
+    --night-black: #1E272E;
+    --cyan-neon: #00CEC9;
+    --cloud-white: #F5F6FA;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--night-black);
+    color: var(--cloud-white);
+    min-height: 100vh;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 6%;
+  }
+
+  .nav .logo {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--cloud-white);
+  }
+
+  .nav .logo span {
+    color: var(--cyan-neon);
+  }
+
+  .nav a.back-link {
+    color: var(--cloud-white);
+    text-decoration: none;
+    border: 1px solid rgba(245, 246, 250, 0.6);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .nav a.back-link:hover {
+    background: rgba(245, 246, 250, 0.1);
+    border-color: rgba(245, 246, 250, 0.9);
+  }
+
+  .contact-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 6% 80px;
+  }
+
+  .contact-card {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .contact-eyebrow {
+    display: inline-block;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan-neon);
+    background: rgba(0, 206, 201, 0.08);
+    border: 1px solid rgba(0, 206, 201, 0.5);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+
+  .contact-card h1 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 14px;
+  }
+
+  .contact-card h1 .accent {
+    color: var(--cyan-neon);
+  }
+
+  .contact-card > p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: rgba(245, 246, 250, 0.75);
+    margin-bottom: 40px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(245, 246, 250, 0.85);
+  }
+
+  .field input,
+  .field textarea {
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--cloud-white);
+    background: rgba(245, 246, 250, 0.06);
+    border: 1px solid rgba(245, 246, 250, 0.18);
+    border-radius: 8px;
+    padding: 13px 16px;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: rgba(245, 246, 250, 0.35);
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--electric-blue);
+    background: rgba(245, 246, 250, 0.09);
+    box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.2);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 140px;
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+
+  .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 15px 32px;
+    border: none;
+    border-radius: 8px;
+    background: var(--electric-blue);
+    color: var(--cloud-white);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .submit-btn:hover {
+    background: #2196f3;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(9, 132, 227, 0.35);
+  }
+
+  .form-note {
+    font-size: 0.85rem;
+    color: rgba(245, 246, 250, 0.5);
+    margin-top: -4px;
+  }
+
+  .toast {
+    position: fixed;
+    top: 28px;
+    right: 28px;
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 380px;
+    background: #24313a;
+    border: 1px solid rgba(0, 206, 201, 0.4);
+    border-left: 3px solid var(--cyan-neon);
+    color: var(--cloud-white);
+    padding: 16px 18px;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transform: translateY(-16px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 206, 201, 0.15);
+    color: var(--cyan-neon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+
+  .toast-body {
+    flex: 1;
+  }
+
+  .toast-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .toast-text {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: rgba(245, 246, 250, 0.7);
+  }
+
+  .toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: rgba(245, 246, 250, 0.5);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+  }
+
+  .toast-close:hover {
+    color: var(--cloud-white);
+  }
+
+  @media (max-width: 640px) {
+    .nav { padding: 20px 5%; }
+    .row-2 { grid-template-columns: 1fr; gap: 22px; }
+    .toast { top: 16px; right: 16px; left: 16px; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="logo">acct<span>omatic</span></a>
+  <a href="index.html" class="back-link">&larr; Back to home</a>
+</nav>
+
+<div class="contact-wrap">
+  <div class="contact-card">
+    <span class="contact-eyebrow">Get in Touch</span>
+    <h1>Let's talk <span class="accent">bookkeeping</span></h1>
+    <p>Tell us a bit about your business and what you're looking for. Our team typically replies within one business day.</p>
+
+    <form id="contact-form">
+      <div class="row-2">
+        <div class="field">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" placeholder="Jane Doe" required>
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="jane@company.com" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="company">Company name</label>
+        <input type="text" id="company" name="company" placeholder="Acme Inc.">
+      </div>
+
+      <div class="field">
+        <label for="message">How can we help?</label>
+        <textarea id="message" name="message" placeholder="Tell us about your accounting needs..." required></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">Send Message</button>
+      <p class="form-note">We'll never share your information with anyone else.</p>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-icon">&#10003;</span>
+  <div class="toast-body">
+    <div class="toast-title">Message sent</div>
+    <div class="toast-text">Thanks for reaching out — we'll be in touch soon.</div>
+  </div>
+  <button type="button" class="toast-close" id="toast-close" aria-label="Dismiss">&times;</button>
+</div>
+
+<script>
+  const form = document.getElementById('contact-form');
+  const toast = document.getElementById('toast');
+  const toastClose = document.getElementById('toast-close');
+  let toastTimer = null;
+
+  function showToast() {
+    clearTimeout(toastTimer);
+    toast.classList.add('visible');
+    toastTimer = setTimeout(hideToast, 5000);
+  }
+
+  function hideToast() {
+    toast.classList.remove('visible');
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    showToast();
+    form.reset();
+  });
+
+  toastClose.addEventListener('click', hideToast);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acctomatic</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --electric-blue: #0984E3;
+    --night-black: #1E272E;
+    --cyan-neon: #00CEC9;
+    --cloud-white: #F5F6FA;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--night-black);
+    color: var(--cloud-white);
+  }
+
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 640px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .hero-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .hero-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 6%;
+  }
+
+  .hero-nav .logo {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  }
+
+  .hero-nav .logo span {
+    color: var(--cyan-neon);
+  }
+
+  .hero-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-nav a.cta-nav {
+    color: var(--cloud-white);
+    text-decoration: none;
+    border: 1px solid rgba(245, 246, 250, 0.6);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    background: rgba(30, 39, 46, 0.35);
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .hero-nav a.cta-nav:hover {
+    background: rgba(30, 39, 46, 0.6);
+    border-color: rgba(245, 246, 250, 0.9);
+  }
+
+  .hero-nav a.cta-nav-ghost {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .hero-nav a.cta-nav-ghost:hover {
+    background: rgba(30, 39, 46, 0.4);
+    border-color: rgba(245, 246, 250, 0.4);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 560px;
+    text-align: left;
+    padding: 0 6%;
+  }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan-neon);
+    background: rgba(30, 39, 46, 0.5);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(0, 206, 201, 0.5);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.08;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.75), 0 1px 4px rgba(0, 0, 0, 0.9);
+  }
+
+  .hero-content h1 .accent {
+    color: var(--cyan-neon);
+  }
+
+  .hero-content p {
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    line-height: 1.6;
+    color: var(--cloud-white);
+    margin-bottom: 36px;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .btn-primary {
+    background: var(--electric-blue);
+    color: var(--cloud-white);
+  }
+
+  .btn-primary:hover {
+    background: #2196f3;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(9, 132, 227, 0.35);
+  }
+
+  .btn-secondary {
+    background: rgba(30, 39, 46, 0.4);
+    backdrop-filter: blur(6px);
+    color: var(--cloud-white);
+    border: 1px solid rgba(245, 246, 250, 0.6);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(30, 39, 46, 0.65);
+    border-color: rgba(245, 246, 250, 0.9);
+    transform: translateY(-2px);
+  }
+
+  .hero-trust {
+    position: absolute;
+    bottom: 32px;
+    left: 6%;
+    z-index: 2;
+    text-align: left;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cloud-white);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  }
+
+  @media (max-width: 640px) {
+    .hero-nav { padding: 20px 5%; }
+    .hero-nav-actions { gap: 8px; }
+    .hero-nav a.cta-nav { padding: 8px 12px; font-size: 0.8rem; }
+    .hero-content { max-width: 100%; }
+    .hero-actions { flex-direction: column; align-items: stretch; width: 100%; }
+    .btn { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <video class="hero-video" autoplay muted loop playsinline preload="auto">
+    <source src="assets/hero-bg.mp4" type="video/mp4">
+  </video>
+
+  <nav class="hero-nav">
+    <div class="logo">acct<span>omatic</span></div>
+    <div class="hero-nav-actions">
+      <a href="contact.html" class="cta-nav cta-nav-ghost">Contact Us</a>
+      <a href="#get-started" class="cta-nav">Get Started</a>
+    </div>
+  </nav>
+
+  <div class="hero-content">
+    <span class="hero-eyebrow">Automated Accounting</span>
+    <h1>Bookkeeping that <span class="accent">runs itself</span></h1>
+    <p>Acctomatic automates reconciliation, reporting, and tax prep so your books close in minutes, not weeks. Built for founders who'd rather build than balance spreadsheets.</p>
+    <div class="hero-actions">
+      <a href="#get-started" class="btn btn-primary">Start Free Trial</a>
+      <a href="#demo" class="btn btn-secondary">Watch Demo</a>
+    </div>
+  </div>
+
+  <div class="hero-trust">Trusted by growing teams to close their books on autopilot</div>
+</section>
+
+</body>
+</html>
