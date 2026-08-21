@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Facebook, Instagram, Link2, Linkedin, ShieldCheck, Workflow } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Linkedin } from "lucide-react";
 import {
   Badge,
   Button,
@@ -12,9 +12,40 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ContactModal, useContactModal } from "@/components/ContactModal";
-import { FeatureGrid } from "@/components/FeatureGrid";
+import { FeatureRing } from "@/components/FeatureRing";
+import { Puzzle, type PuzzleFill } from "@/components/Puzzle";
 import { fadeInUp, stagger, viewportOnce } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+
+const CONNECT_FILL: PuzzleFill = {
+  base: "#EEF2FF",
+  blobs: [
+    { cx: 280, cy: 260, r: 260, color: "#0052FF", opacity: 0.16 },
+    { cx: 760, cy: 220, r: 220, color: "#0F172A", opacity: 0.06 },
+    { cx: 520, cy: 680, r: 320, color: "#4D7CFF", opacity: 0.22 },
+    { cx: 850, cy: 800, r: 200, color: "#0052FF", opacity: 0.1 },
+  ],
+};
+
+const TRUST_FILL: PuzzleFill = {
+  base: "#0052FF",
+  blobs: [
+    { cx: 260, cy: 240, r: 300, color: "#4D7CFF", opacity: 0.85 },
+    { cx: 760, cy: 260, r: 240, color: "#0F172A", opacity: 0.22 },
+    { cx: 540, cy: 700, r: 340, color: "#FFFFFF", opacity: 0.14 },
+    { cx: 860, cy: 820, r: 220, color: "#4D7CFF", opacity: 0.5 },
+  ],
+};
+
+const ACT_FILL: PuzzleFill = {
+  base: "#EEF2FF",
+  blobs: [
+    { cx: 240, cy: 720, r: 300, color: "#4D7CFF", opacity: 0.2 },
+    { cx: 720, cy: 760, r: 240, color: "#0052FF", opacity: 0.14 },
+    { cx: 500, cy: 320, r: 320, color: "#0F172A", opacity: 0.05 },
+    { cx: 800, cy: 220, r: 200, color: "#0052FF", opacity: 0.22 },
+  ],
+};
 
 function Section({
   children,
@@ -66,18 +97,14 @@ export default function App() {
   const footerOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const contactModal = useContactModal();
 
-  // Hero-as-header: hide on scroll down, reveal on scroll up, once past the fold.
+  // Hero-as-header: hides once you scroll past the fold, reappears only back near the top.
   const { scrollY } = useScroll();
   const [headerHidden, setHeaderHidden] = useState(false);
   useMotionValueEvent(scrollY, "change", (current) => {
-    const previous = scrollY.getPrevious() ?? 0;
-    const diff = current - previous;
     if (current < 120) {
       setHeaderHidden(false);
-    } else if (diff > 0) {
+    } else if (current > 240) {
       setHeaderHidden(true);
-    } else if (diff < 0) {
-      setHeaderHidden(false);
     }
   });
 
@@ -184,7 +211,7 @@ export default function App() {
         </div>
 
         <div className="mt-14">
-          <FeatureGrid />
+          <FeatureRing />
         </div>
       </Section>
 
@@ -192,51 +219,58 @@ export default function App() {
       <Section id="how-it-works">
         <SectionIntro label="How It Works" title="Same engine. Your fields. Your rules." showLabel={false} />
         <div className="grid gap-8 md:grid-cols-3">
-          <ClickableCard href="#get-started" className="p-8 md:p-10">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted text-foreground transition-colors group-hover:bg-accent/10 group-hover:text-accent">
-              <Link2 className="h-6 w-6" />
+          <ClickableCard href="#get-started" className="relative min-h-[440px] overflow-hidden p-0">
+            <Puzzle id="puzzle-connect" fill={CONNECT_FILL} />
+            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-card via-card/95 to-transparent p-8 pt-24 md:p-10 md:pt-28">
+              <h3 className="text-xl font-semibold tracking-[-0.01em] md:text-2xl">Connect</h3>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                Documents arrive through email, Drive, Slack, Teams, or a direct upload —
+                Acctomatic reads them without changing how your team already works.
+              </p>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
+                Learn more
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
             </div>
-            <h3 className="mt-6 text-xl font-semibold tracking-[-0.01em] md:text-2xl">Connect</h3>
-            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-              Documents arrive through email, Drive, Slack, Teams, or a direct upload — Acctomatic
-              reads them without changing how your team already works.
-            </p>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
-              Learn more
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </span>
           </ClickableCard>
 
-          <FeaturedClickableCard href="#get-started" contentClassName="p-8 md:p-10">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground shadow-accent">
-              <ShieldCheck className="h-6 w-6" />
+          <FeaturedClickableCard
+            href="#get-started"
+            contentClassName="relative min-h-[440px] overflow-hidden p-0"
+          >
+            <Puzzle id="puzzle-trust" fill={TRUST_FILL} />
+            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-accent via-accent/95 to-transparent p-8 pt-24 md:p-10 md:pt-28">
+              <h3 className="text-xl font-semibold tracking-[-0.01em] text-accent-foreground md:text-2xl">
+                AI proposes. Acctomatic proves.
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-accent-foreground/80">
+                Every extracted field is checked against the document itself — evidence,
+                arithmetic, format, and your company's own rules — before it's ever trusted.
+              </p>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent-foreground">
+                Learn more
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
             </div>
-            <h3 className="mt-6 text-xl font-semibold tracking-[-0.01em] md:text-2xl">
-              AI proposes. Acctomatic proves.
-            </h3>
-            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-              Every extracted field is checked against the document itself — evidence, arithmetic,
-              format, and your company's own rules — before it's ever trusted.
-            </p>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
-              Learn more
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </span>
           </FeaturedClickableCard>
 
-          <ClickableCard href="#get-started" elevated className="p-8 md:p-10">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted text-foreground transition-colors group-hover:bg-accent/10 group-hover:text-accent">
-              <Workflow className="h-6 w-6" />
+          <ClickableCard
+            href="#get-started"
+            elevated
+            className="relative min-h-[440px] overflow-hidden p-0"
+          >
+            <Puzzle id="puzzle-act" fill={ACT_FILL} />
+            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-card via-card/95 to-transparent p-8 pt-24 md:p-10 md:pt-28">
+              <h3 className="text-xl font-semibold tracking-[-0.01em] md:text-2xl">Act</h3>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                Verified fields file themselves and update the books. You only see what needs a
+                second look — exceptions, not everything.
+              </p>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
+                Learn more
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
             </div>
-            <h3 className="mt-6 text-xl font-semibold tracking-[-0.01em] md:text-2xl">Act</h3>
-            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-              Verified fields file themselves and update the books. You only see what needs a
-              second look — exceptions, not everything.
-            </p>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
-              Learn more
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </span>
           </ClickableCard>
         </div>
       </Section>

@@ -59,6 +59,23 @@ h2 {
   .glow {
     filter: blur(150px);
   }
+
+  /*
+   * Jigsaw-piece assemble/scatter transform, adapted from
+   * https://github.com/pouretrebelle/jigsaws. `--animate` (0 = scattered,
+   * 1 = assembled) is written directly onto each puzzle's root <svg> from
+   * scroll progress; every piece reads it back through this shared rule.
+   */
+  .puzzle-piece {
+    --scatter: 60%;
+    --start-x: calc(var(--piece-x) * var(--scatter));
+    --start-y: calc(var(--piece-y) * var(--scatter));
+    --x: calc(var(--start-x) * (-1 * var(--animate, 0) + 1));
+    --y: calc(var(--start-y) * (-1 * var(--animate, 0) + 1));
+    --rotate: calc(var(--start-rotate) * (-1 * var(--animate, 0) + 1));
+    transform-origin: calc(50% + 50% * var(--piece-x)) calc(50% + 50% * var(--piece-y));
+    transform: translate(var(--x), var(--y)) rotate(var(--rotate));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
