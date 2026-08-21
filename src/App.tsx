@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Facebook, Instagram, Linkedin } from "lucide-react";
 import {
   Badge,
@@ -98,15 +98,25 @@ export default function App() {
   const contactModal = useContactModal();
 
   // Hero-as-header: hides once you scroll past the fold, reappears only back near the top.
+  // Uses a native scroll listener rather than useMotionValueEvent - the motion
+  // value's "change" event can silently miss a very large/fast scroll jump
+  // (e.g. a big scrollTo or a fast fling), which left the header stuck hidden
+  // even once scrollY had genuinely returned to 0.
   const { scrollY } = useScroll();
   const [headerHidden, setHeaderHidden] = useState(false);
-  useMotionValueEvent(scrollY, "change", (current) => {
-    if (current < 120) {
-      setHeaderHidden(false);
-    } else if (current > 240) {
-      setHeaderHidden(true);
-    }
-  });
+  useEffect(() => {
+    const handleScroll = () => {
+      const current = window.scrollY;
+      if (current < 120) {
+        setHeaderHidden(false);
+      } else if (current > 240) {
+        setHeaderHidden(true);
+      }
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const smoothScrollY = useSpring(scrollY, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const smoothHeroBlur = useTransform(smoothScrollY, [0, 600], ["blur(0px)", "blur(16px)"]);
