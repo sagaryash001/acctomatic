@@ -198,10 +198,13 @@ export function ContactModal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Iris wash: a circle that scales up from the click point. Animating
-              `scale` (transform) instead of clip-path keeps this on the GPU. */}
+          {/* Iris wash: a circle that scales up from the click point, revealing a
+              wireframe-room backdrop. Animating `scale` (transform) instead of
+              clip-path keeps this on the GPU. The image's black is screen-blended
+              against the same navy as `--foreground` so it reads as one continuous
+              surface with the iris rather than a mismatched black. */}
           <motion.div
-            className="absolute rounded-full bg-foreground"
+            className="absolute rounded-full"
             style={{
               left: origin.x,
               top: origin.y,
@@ -209,6 +212,11 @@ export function ContactModal({
               height: diameter,
               x: "-50%",
               y: "-50%",
+              backgroundColor: "var(--foreground)",
+              backgroundImage: "url(/textures/wireframe-room.jpg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundBlendMode: "screen",
             }}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}

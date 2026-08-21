@@ -32,7 +32,7 @@ html {
 }
 
 body {
-  background: var(--background);
+  background: var(--background) url("/textures/mesh-grid.jpg") center / cover no-repeat fixed;
   color: var(--foreground);
   font-family: "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -58,6 +58,10 @@ h2 {
 
   .glow {
     filter: blur(150px);
+  }
+
+  .bg-mesh {
+    background: var(--background) url("/textures/mesh-grid.jpg") center / cover no-repeat fixed;
   }
 
   /*

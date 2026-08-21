@@ -195,7 +195,7 @@ export default function App() {
         </Section>
       </motion.header>
 
-      <div className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-background shadow-[0_40px_60px_-20px_rgba(15,23,42,0.25)]">
+      <div className="bg-mesh relative z-10 overflow-hidden rounded-b-[2.5rem] shadow-[0_40px_60px_-20px_rgba(15,23,42,0.25)]">
       <main>
         {/* Spacer — reserves the space the fixed hero header occupies. */}
         <div aria-hidden className="h-dvh min-h-[640px] w-full" />

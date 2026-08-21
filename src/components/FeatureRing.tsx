@@ -48,8 +48,10 @@ function RingCard({ feature, index }: { feature: Feature; index: number }) {
   return (
     <div
       className={cn(
-        "absolute left-1/2 top-1/2 flex h-80 w-72 flex-col rounded-2xl border border-border p-8 shadow-xl",
-        feature.accent ? "bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground" : "bg-card",
+        "absolute left-1/2 top-1/2 flex h-80 w-72 flex-col rounded-2xl p-8",
+        feature.accent
+          ? "border border-white/10 bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground shadow-accent-lg"
+          : "border border-black/[0.08] bg-card/95 shadow-[0_24px_48px_-16px_rgba(15,23,42,0.35)] backdrop-blur-md",
       )}
       style={{
         transform: `translate(-50%, -50%) rotateY(${index * ANGLE_STEP}deg) translateZ(${RADIUS}px)`,
