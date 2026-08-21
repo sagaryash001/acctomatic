@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Facebook, Instagram, Link2, Linkedin, ShieldCheck, Workflow } from "lucide-react";
 import {
   Badge,
@@ -12,6 +12,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ContactModal, useContactModal } from "@/components/ContactModal";
+import { FeatureGrid } from "@/components/FeatureGrid";
 import { fadeInUp, stagger, viewportOnce } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -65,14 +66,35 @@ export default function App() {
   const footerOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const contactModal = useContactModal();
 
+  // Hero-as-header: hide on scroll down, reveal on scroll up, once past the fold.
+  const { scrollY } = useScroll();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  useMotionValueEvent(scrollY, "change", (current) => {
+    const previous = scrollY.getPrevious() ?? 0;
+    const diff = current - previous;
+    if (current < 120) {
+      setHeaderHidden(false);
+    } else if (diff > 0) {
+      setHeaderHidden(true);
+    } else if (diff < 0) {
+      setHeaderHidden(false);
+    }
+  });
+
+  const smoothScrollY = useSpring(scrollY, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const smoothHeroBlur = useTransform(smoothScrollY, [0, 600], ["blur(0px)", "blur(16px)"]);
+
   return (
     <>
-      <div className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-background shadow-[0_40px_60px_-20px_rgba(15,23,42,0.25)]">
-      <main>
-        {/* Hero */}
-      <section className="relative h-dvh min-h-[640px] w-full overflow-hidden">
-        <video
+      {/* Hero header — pinned to the viewport, hides on scroll down and reveals on scroll up. */}
+      <motion.header
+        className="fixed inset-x-0 top-0 z-30 h-dvh min-h-[640px] w-full overflow-hidden"
+        animate={{ y: headerHidden ? "-100%" : "0%" }}
+        transition={{ type: "spring", stiffness: 320, damping: 34 }}
+      >
+        <motion.video
           className="absolute left-1/2 top-1/2 h-auto min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
+          style={{ filter: smoothHeroBlur }}
           autoPlay
           muted
           loop
@@ -80,7 +102,7 @@ export default function App() {
           preload="auto"
         >
           <source src="/hero-bg.mp4" type="video/mp4" />
-        </video>
+        </motion.video>
 
         <nav className="relative z-10 flex items-center justify-between px-6 py-7">
           <span className="text-lg font-semibold tracking-[-0.02em] text-white">
@@ -134,7 +156,12 @@ export default function App() {
             </motion.div>
           </motion.div>
         </Section>
-      </section>
+      </motion.header>
+
+      <div className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-background shadow-[0_40px_60px_-20px_rgba(15,23,42,0.25)]">
+      <main>
+        {/* Spacer — reserves the space the fixed hero header occupies. */}
+        <div aria-hidden className="h-dvh min-h-[640px] w-full" />
 
       {/* Get started */}
       <Section id="get-started">
@@ -154,6 +181,10 @@ export default function App() {
           <Button variant="ghost" size="lg">
             Talk to Sales
           </Button>
+        </div>
+
+        <div className="mt-14">
+          <FeatureGrid />
         </div>
       </Section>
 
