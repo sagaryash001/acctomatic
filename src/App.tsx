@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { ContactModal, useContactModal } from "@/components/ContactModal";
 import { DoorsProvider } from "@/components/DoorsTransition";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { AuthProvider } from "@/lib/auth/useAuth";
 import { HomePage } from "@/pages/HomePage";
 import { FeaturePage } from "@/pages/FeaturePage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -24,6 +25,11 @@ const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then((module) => ({
 const AffiliatePage = lazy(() =>
   import("@/pages/AffiliatePage").then((module) => ({ default: module.AffiliatePage })),
 );
+const SignUpPage = lazy(() => import("@/pages/SignUpPage").then((module) => ({ default: module.SignUpPage })));
+const LoginPage = lazy(() => import("@/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
+const CheckEmailPage = lazy(() =>
+  import("@/pages/CheckEmailPage").then((module) => ({ default: module.CheckEmailPage })),
+);
 
 export default function App() {
   const contactModal = useContactModal();
@@ -37,33 +43,38 @@ export default function App() {
     // JS-driven animations run at full strength regardless, which is both a
     // smoothness cost on weaker mobile hardware and an accessibility gap.
     <MotionConfig reducedMotion="user">
-      <DoorsProvider>
-        <Suspense fallback={<LoadingOverlay />}>
-          <Routes>
-            <Route path="/" element={<HomePage contactModal={contactModal} />} />
-            <Route path="/features/:slug" element={<FeaturePage contactModal={contactModal} />} />
-            <Route path="/faq" element={<FaqPage contactModal={contactModal} />} />
-            <Route path="/team" element={<TeamPage contactModal={contactModal} />} />
-            <Route path="/blog" element={<BlogPage contactModal={contactModal} />} />
-            <Route path="/blog/:slug" element={<BlogPostPage contactModal={contactModal} />} />
-            <Route path="/privacy" element={<PrivacyPage contactModal={contactModal} />} />
-            <Route path="/pricing" element={<PricingPage contactModal={contactModal} />} />
-            <Route path="/affiliate" element={<AffiliatePage contactModal={contactModal} />} />
-            <Route
-              path="/demo"
-              element={
-                <ComingSoonPage
-                  title="Book a Demo"
-                  description="Guided demos are being scheduled by hand for now — reach out and we'll set one up personally."
-                  contactModal={contactModal}
-                />
-              }
-            />
-            <Route path="*" element={<NotFoundPage contactModal={contactModal} />} />
-          </Routes>
-        </Suspense>
-        <ContactModal origin={contactModal.origin} onClose={contactModal.close} />
-      </DoorsProvider>
+      <AuthProvider>
+        <DoorsProvider>
+          <Suspense fallback={<LoadingOverlay />}>
+            <Routes>
+              <Route path="/" element={<HomePage contactModal={contactModal} />} />
+              <Route path="/features/:slug" element={<FeaturePage contactModal={contactModal} />} />
+              <Route path="/faq" element={<FaqPage contactModal={contactModal} />} />
+              <Route path="/team" element={<TeamPage contactModal={contactModal} />} />
+              <Route path="/blog" element={<BlogPage contactModal={contactModal} />} />
+              <Route path="/blog/:slug" element={<BlogPostPage contactModal={contactModal} />} />
+              <Route path="/privacy" element={<PrivacyPage contactModal={contactModal} />} />
+              <Route path="/pricing" element={<PricingPage contactModal={contactModal} />} />
+              <Route path="/affiliate" element={<AffiliatePage contactModal={contactModal} />} />
+              <Route path="/signup" element={<SignUpPage contactModal={contactModal} />} />
+              <Route path="/login" element={<LoginPage contactModal={contactModal} />} />
+              <Route path="/check-email" element={<CheckEmailPage contactModal={contactModal} />} />
+              <Route
+                path="/demo"
+                element={
+                  <ComingSoonPage
+                    title="Book a Demo"
+                    description="Guided demos are being scheduled by hand for now — reach out and we'll set one up personally."
+                    contactModal={contactModal}
+                  />
+                }
+              />
+              <Route path="*" element={<NotFoundPage contactModal={contactModal} />} />
+            </Routes>
+          </Suspense>
+          <ContactModal origin={contactModal.origin} onClose={contactModal.close} />
+        </DoorsProvider>
+      </AuthProvider>
     </MotionConfig>
   );
 }
