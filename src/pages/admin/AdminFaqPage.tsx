@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { HelpCircle, Trash2 } from "lucide-react";
 import { Button, Input, Textarea } from "@/components/ui";
+import { AdminCard } from "@/components/admin/AdminCard";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { StatusPill } from "@/components/admin/StatusPill";
 import { supabase } from "@/lib/supabase";
 import type { FaqItem } from "@/lib/content";
 
@@ -58,11 +61,12 @@ export function AdminFaqPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-[-0.01em]">FAQ</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Shown on /faq when published.</p>
+      <PageHeader icon={HelpCircle} title="FAQ" subtitle="Shown on /faq when published." />
 
-      <div className="mt-6 rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">{editingId ? "Edit question" : "New question"}</h2>
+      <AdminCard>
+        <h2 className="font-mono text-xs uppercase tracking-[0.15em] text-accent">
+          {editingId ? "Edit question" : "New question"}
+        </h2>
         <div className="mt-4 space-y-3">
           <Input
             placeholder="Question"
@@ -89,7 +93,7 @@ export function AdminFaqPage() {
               value={draft.sort_order}
               onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })}
             />
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={draft.published}
@@ -99,11 +103,7 @@ export function AdminFaqPage() {
             </label>
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={save}
-              disabled={saving || !draft.question || !draft.answer}
-            >
+            <Button size="sm" onClick={save} disabled={saving || !draft.question || !draft.answer}>
               {editingId ? "Save changes" : "Add question"}
             </Button>
             {editingId && (
@@ -113,27 +113,32 @@ export function AdminFaqPage() {
             )}
           </div>
         </div>
-      </div>
+      </AdminCard>
 
       <div className="mt-6 space-y-3">
         {items?.map((item) => (
-          <div key={item.id} className="flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-4">
+          <AdminCard key={item.id} className="flex items-start justify-between gap-4 p-4">
             <button className="min-w-0 flex-1 text-left" onClick={() => startEdit(item)}>
               <p className="font-medium text-foreground">{item.question}</p>
               <p className="mt-1 truncate text-sm text-muted-foreground">{item.answer}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {item.published ? "Published" : "Draft"} · order {item.sort_order}
-                {item.category && ` · ${item.category}`}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <StatusPill
+                  label={item.published ? "Published" : "Draft"}
+                  tone={item.published ? "emerald" : "slate"}
+                  pulse={item.published}
+                />
+                <span className="font-mono text-[11px] text-muted-foreground">order {item.sort_order}</span>
+                {item.category && <span className="font-mono text-[11px] text-muted-foreground">{item.category}</span>}
+              </div>
             </button>
             <button
               onClick={() => remove(item.id)}
               aria-label="Delete"
-              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-red-400"
             >
               <Trash2 className="h-4 w-4" />
             </button>
-          </div>
+          </AdminCard>
         ))}
       </div>
     </div>

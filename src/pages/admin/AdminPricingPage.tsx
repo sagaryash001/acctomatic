@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Tag, Trash2 } from "lucide-react";
 import { Button, Input, Textarea } from "@/components/ui";
+import { AdminCard } from "@/components/admin/AdminCard";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { StatusPill } from "@/components/admin/StatusPill";
 import { supabase } from "@/lib/supabase";
 import type { PricingPlan } from "@/lib/content";
 
@@ -82,11 +85,12 @@ export function AdminPricingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-[-0.01em]">Pricing</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Shown on /pricing when published.</p>
+      <PageHeader icon={Tag} title="Pricing" subtitle="Shown on /pricing when published." />
 
-      <div className="mt-6 rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">{editingId ? "Edit plan" : "New plan"}</h2>
+      <AdminCard>
+        <h2 className="font-mono text-xs uppercase tracking-[0.15em] text-accent">
+          {editingId ? "Edit plan" : "New plan"}
+        </h2>
         <div className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-3">
             <Input
@@ -130,7 +134,7 @@ export function AdminPricingPage() {
               value={draft.sort_order}
               onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })}
             />
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={draft.is_custom_pricing}
@@ -138,7 +142,7 @@ export function AdminPricingPage() {
               />
               Custom pricing
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={draft.highlighted}
@@ -146,7 +150,7 @@ export function AdminPricingPage() {
               />
               Highlighted
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={draft.published}
@@ -166,29 +170,36 @@ export function AdminPricingPage() {
             )}
           </div>
         </div>
-      </div>
+      </AdminCard>
 
       <div className="mt-6 space-y-3">
         {plans?.map((plan) => (
-          <div key={plan.id} className="flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-4">
+          <AdminCard key={plan.id} className="flex items-start justify-between gap-4 p-4">
             <button className="min-w-0 flex-1 text-left" onClick={() => startEdit(plan)}>
               <p className="font-medium text-foreground">
                 {plan.name}{" "}
-                {plan.is_custom_pricing ? "(custom)" : plan.price_monthly != null ? `- $${plan.price_monthly}/mo` : ""}
+                <span className="font-mono text-sm font-normal text-accent">
+                  {plan.is_custom_pricing ? "custom" : plan.price_monthly != null ? `$${plan.price_monthly}/mo` : ""}
+                </span>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {plan.published ? "Published" : "Draft"} · order {plan.sort_order}
-                {plan.highlighted && " · highlighted"}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <StatusPill
+                  label={plan.published ? "Published" : "Draft"}
+                  tone={plan.published ? "emerald" : "slate"}
+                  pulse={plan.published}
+                />
+                {plan.highlighted && <StatusPill label="Highlighted" tone="blue" />}
+                <span className="font-mono text-[11px] text-muted-foreground">order {plan.sort_order}</span>
+              </div>
             </button>
             <button
               onClick={() => remove(plan.id)}
               aria-label="Delete"
-              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-red-400"
             >
               <Trash2 className="h-4 w-4" />
             </button>
-          </div>
+          </AdminCard>
         ))}
       </div>
     </div>

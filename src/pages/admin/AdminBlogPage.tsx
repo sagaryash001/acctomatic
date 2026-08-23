@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Newspaper, Trash2 } from "lucide-react";
 import { Button, Input } from "@/components/ui";
+import { AdminCard } from "@/components/admin/AdminCard";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { StatusPill } from "@/components/admin/StatusPill";
 import { supabase } from "@/lib/supabase";
 import type { BlogPost } from "@/lib/content";
 
@@ -75,11 +78,12 @@ export function AdminBlogPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-[-0.01em]">Blog</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Shown on /blog when published.</p>
+      <PageHeader icon={Newspaper} title="Blog" subtitle="Shown on /blog when published." />
 
-      <div className="mt-6 rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">{editingId ? "Edit post" : "New post"}</h2>
+      <AdminCard>
+        <h2 className="font-mono text-xs uppercase tracking-[0.15em] text-accent">
+          {editingId ? "Edit post" : "New post"}
+        </h2>
         <div className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-3">
             <Input
@@ -108,7 +112,7 @@ export function AdminBlogPage() {
           />
           <MarkdownEditor value={draft.body} onChange={(body) => setDraft({ ...draft, body })} />
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={draft.published}
@@ -128,25 +132,30 @@ export function AdminBlogPage() {
             </div>
           </div>
         </div>
-      </div>
+      </AdminCard>
 
       <div className="mt-6 space-y-3">
         {posts?.map((post) => (
-          <div key={post.id} className="flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-4">
+          <AdminCard key={post.id} className="flex items-start justify-between gap-4 p-4">
             <button className="min-w-0 flex-1 text-left" onClick={() => startEdit(post)}>
               <p className="font-medium text-foreground">{post.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {post.published ? "Published" : "Draft"} · /blog/{post.slug}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <StatusPill
+                  label={post.published ? "Published" : "Draft"}
+                  tone={post.published ? "emerald" : "slate"}
+                  pulse={post.published}
+                />
+                <span className="font-mono text-[11px] text-muted-foreground">/blog/{post.slug}</span>
+              </div>
             </button>
             <button
               onClick={() => remove(post.id)}
               aria-label="Delete"
-              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+              className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-red-400"
             >
               <Trash2 className="h-4 w-4" />
             </button>
-          </div>
+          </AdminCard>
         ))}
       </div>
     </div>
