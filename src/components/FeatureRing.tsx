@@ -40,7 +40,6 @@ const features: Feature[] = [
   },
 ];
 
-const RADIUS = 340;
 const ANGLE_STEP = 360 / features.length;
 
 function RingCard({ feature, index }: { feature: Feature; index: number }) {
@@ -48,11 +47,17 @@ function RingCard({ feature, index }: { feature: Feature; index: number }) {
   return (
     <div
       className={cn(
-        "absolute left-1/2 top-1/2 flex h-80 w-72 flex-col rounded-2xl border border-border p-8 shadow-xl",
-        feature.accent ? "bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground" : "bg-card",
+        "absolute left-1/2 top-1/2 flex h-64 w-56 flex-col rounded-2xl p-6 sm:h-72 sm:w-64 sm:p-7 md:h-80 md:w-72 md:p-8",
+        feature.accent
+          ? "border border-white/10 bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground shadow-accent-lg"
+          : "border border-black/[0.08] bg-card/95 shadow-[0_24px_48px_-16px_rgba(15,23,42,0.35)] backdrop-blur-md",
       )}
       style={{
-        transform: `translate(-50%, -50%) rotateY(${index * ANGLE_STEP}deg) translateZ(${RADIUS}px)`,
+        // Radius scales down with viewport width (via the --ring-radius
+        // custom property on the ring container below) so the carousel
+        // doesn't stay desktop-sized - and clipped by its own
+        // overflow-hidden wrapper - on a narrow phone.
+        transform: `translate(-50%, -50%) rotateY(${index * ANGLE_STEP}deg) translateZ(var(--ring-radius))`,
         backfaceVisibility: "hidden",
       }}
     >
@@ -116,8 +121,8 @@ export function FeatureRing() {
 
   return (
     <div
-      className="relative mx-auto h-[560px] w-full select-none overflow-hidden"
-      style={{ perspective: 1400 }}
+      className="relative mx-auto h-[420px] w-full select-none overflow-hidden sm:h-[480px] md:h-[560px]"
+      style={{ perspective: 1400, "--ring-radius": "clamp(180px, 42vw, 340px)" } as React.CSSProperties}
     >
       <div
         ref={ringRef}
