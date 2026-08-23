@@ -2,7 +2,10 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+.env
 .DS_Store
 *.tsbuildinfo
 .claude/
 graphify-out/
+supabase/.env
+supabase/.temp/

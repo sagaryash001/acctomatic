@@ -239,14 +239,14 @@ export function HomePage({
               that fits.
             </p>
             <div className="flex flex-wrap items-center gap-4">
-              <Button variant="primary" size="lg" className="group">
+              <Button variant="primary" size="lg" className="group" onClick={() => navigateWithDoors("/signup")}>
                 Start Free Trial
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
               <Button variant="secondary" size="lg" onClick={() => navigateWithDoors("/demo")}>
                 Book a Demo
               </Button>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" onClick={contactModal.open}>
                 Talk to Sales
               </Button>
             </div>
