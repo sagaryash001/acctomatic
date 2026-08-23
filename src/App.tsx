@@ -14,6 +14,16 @@ const ComingSoonPage = lazy(() =>
   import("@/pages/ComingSoonPage").then((module) => ({ default: module.ComingSoonPage })),
 );
 const TeamPage = lazy(() => import("@/pages/TeamPage").then((module) => ({ default: module.TeamPage })));
+const FaqPage = lazy(() => import("@/pages/FaqPage").then((module) => ({ default: module.FaqPage })));
+const BlogPage = lazy(() => import("@/pages/BlogPage").then((module) => ({ default: module.BlogPage })));
+const BlogPostPage = lazy(() =>
+  import("@/pages/BlogPostPage").then((module) => ({ default: module.BlogPostPage })),
+);
+const PricingPage = lazy(() => import("@/pages/PricingPage").then((module) => ({ default: module.PricingPage })));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
+const AffiliatePage = lazy(() =>
+  import("@/pages/AffiliatePage").then((module) => ({ default: module.AffiliatePage })),
+);
 
 export default function App() {
   const contactModal = useContactModal();
@@ -32,57 +42,13 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage contactModal={contactModal} />} />
             <Route path="/features/:slug" element={<FeaturePage contactModal={contactModal} />} />
-            <Route
-              path="/faq"
-              element={
-                <ComingSoonPage
-                  title="FAQ"
-                  description="Answers to the common questions are on the way. In the meantime, reach out and we'll answer directly."
-                  contactModal={contactModal}
-                />
-              }
-            />
+            <Route path="/faq" element={<FaqPage contactModal={contactModal} />} />
             <Route path="/team" element={<TeamPage contactModal={contactModal} />} />
-            <Route
-              path="/blog"
-              element={
-                <ComingSoonPage
-                  title="Blog"
-                  description="Product notes and updates from the Acctomatic team are coming soon."
-                  contactModal={contactModal}
-                />
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                <ComingSoonPage
-                  title="Privacy"
-                  description="Our privacy policy is being finalized. Reach out if you have questions in the meantime."
-                  contactModal={contactModal}
-                />
-              }
-            />
-            <Route
-              path="/pricing"
-              element={
-                <ComingSoonPage
-                  title="Pricing"
-                  description="Pricing details are on the way. Talk to sales for a plan that fits your team today."
-                  contactModal={contactModal}
-                />
-              }
-            />
-            <Route
-              path="/affiliate"
-              element={
-                <ComingSoonPage
-                  title="Affiliate"
-                  description="Our affiliate program is in the works. Get in touch if you'd like to partner early."
-                  contactModal={contactModal}
-                />
-              }
-            />
+            <Route path="/blog" element={<BlogPage contactModal={contactModal} />} />
+            <Route path="/blog/:slug" element={<BlogPostPage contactModal={contactModal} />} />
+            <Route path="/privacy" element={<PrivacyPage contactModal={contactModal} />} />
+            <Route path="/pricing" element={<PricingPage contactModal={contactModal} />} />
+            <Route path="/affiliate" element={<AffiliatePage contactModal={contactModal} />} />
             <Route
               path="/demo"
               element={
