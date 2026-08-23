@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { Button, Input, Textarea } from "@/components/ui";
+import { supabase } from "@/lib/supabase";
 
 export interface ContactOrigin {
   x: number;
@@ -48,6 +49,15 @@ export function ContactModal({
 }) {
   const [step, setStep] = useState(0);
   const [volume, setVolume] = useState(VOLUMES[1]);
+  const [fields, setFields] = useState({ name: "", email: "", company: "", tools: "", message: "" });
+  // Honeypot: hidden from real users via CSS, so only bots that blindly fill
+  // every form field end up populating it. Checked server-side on submit.
+  const [hpField, setHpField] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const updateField = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setFields((f) => ({ ...f, [key]: e.target.value }));
 
   useEffect(() => {
     if (!origin) return;
@@ -79,6 +89,29 @@ export function ContactModal({
   };
   const back = () => setStep((s) => Math.max(0, s - 1));
 
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("submit-lead", {
+      body: {
+        name: fields.name,
+        email: fields.email,
+        company: fields.company,
+        docVolume: volume,
+        tools: fields.tools,
+        message: fields.message,
+        hpField,
+      },
+    });
+    setSubmitting(false);
+    if (error || !data?.ok) {
+      setSubmitError("Something went wrong sending your message — please try again.");
+      return;
+    }
+    setStep((s) => s + 1);
+  };
+
   /** One card per question, so each step is its own page in the stack. */
   const renderStep = (index: number) => {
     switch (index) {
@@ -92,14 +125,43 @@ export function ContactModal({
               index={0}
             />
             <form className="mt-8 space-y-5" onSubmit={next}>
-              <Field id="contact-name" label="Full name" placeholder="Jane Doe" />
+              <Field
+                id="contact-name"
+                label="Full name"
+                placeholder="Jane Doe"
+                value={fields.name}
+                onChange={updateField("name")}
+              />
               <Field
                 id="contact-email"
                 label="Work email"
                 type="email"
                 placeholder="jane@company.com"
+                value={fields.email}
+                onChange={updateField("email")}
               />
-              <Field id="contact-company" label="Company" placeholder="Acme Inc." />
+              <Field
+                id="contact-company"
+                label="Company"
+                placeholder="Acme Inc."
+                value={fields.company}
+                onChange={updateField("company")}
+              />
+              {/* Honeypot - visually hidden from real users, off-screen rather
+                  than display:none so form-fillers that skip hidden fields
+                  still land here, but a screen reader/tab order never does. */}
+              <div className="absolute -left-[9999px]" aria-hidden="true">
+                <label htmlFor="contact-hp">Leave this field empty</label>
+                <input
+                  id="contact-hp"
+                  name="hp"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={hpField}
+                  onChange={(e) => setHpField(e.target.value)}
+                />
+              </div>
               <Button type="submit" variant="primary" size="lg" className="w-full">
                 Continue
               </Button>
@@ -152,6 +214,8 @@ export function ContactModal({
                 id="contact-tools"
                 label="Tools and inboxes"
                 placeholder="Email, Drive, Slack, NetSuite…"
+                value={fields.tools}
+                onChange={updateField("tools")}
               />
               <Button type="submit" variant="primary" size="lg" className="w-full">
                 Continue
@@ -168,7 +232,7 @@ export function ContactModal({
               subtitle="The part of the process you'd most like to stop doing by hand."
               index={3}
             />
-            <form className="mt-8 space-y-5" onSubmit={next}>
+            <form className="mt-8 space-y-5" onSubmit={handleFinalSubmit}>
               <div className="space-y-2">
                 <label htmlFor="contact-message" className="text-sm font-medium text-white/80">
                   Tell us more
@@ -178,10 +242,13 @@ export function ContactModal({
                   required
                   placeholder="Manual data entry, approval chases, month-end crunch…"
                   className={fieldClassName}
+                  value={fields.message}
+                  onChange={updateField("message")}
                 />
               </div>
-              <Button type="submit" variant="primary" size="lg" className="w-full">
-                Send Message
+              {submitError && <p className="text-sm text-red-400">{submitError}</p>}
+              <Button type="submit" variant="primary" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? "Sending…" : "Send Message"}
               </Button>
             </form>
           </>
@@ -194,7 +261,15 @@ export function ContactModal({
   const isSent = step === TOTAL_STEPS;
 
   return (
-    <AnimatePresence onExitComplete={() => setStep(0)}>
+    <AnimatePresence
+      onExitComplete={() => {
+        setStep(0);
+        setFields({ name: "", email: "", company: "", tools: "", message: "" });
+        setVolume(VOLUMES[1]);
+        setHpField("");
+        setSubmitError(null);
+      }}
+    >
       {origin && (
         <motion.div
           key="contact-modal"
@@ -355,18 +430,30 @@ function Field({
   label,
   placeholder,
   type,
+  value,
+  onChange,
 }: {
   id: string;
   label: string;
   placeholder: string;
   type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="text-sm font-medium text-white/80">
         {label}
       </label>
-      <Input id={id} type={type} required placeholder={placeholder} className={fieldClassName} />
+      <Input
+        id={id}
+        type={type}
+        required
+        placeholder={placeholder}
+        className={fieldClassName}
+        value={value}
+        onChange={onChange}
+      />
     </div>
   );
 }
