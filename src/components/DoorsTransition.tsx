@@ -95,7 +95,11 @@ export function DoorsProvider({ children }: { children: React.ReactNode }) {
       setPhase("closing");
       window.setTimeout(() => {
         navigate(path);
-        window.scrollTo(0, 0);
+        // Explicit "instant": the two-arg scrollTo() form defers to the
+        // page's CSS scroll-behavior, which is "smooth" here - without this
+        // it animates the reset to the top over the transition, so the
+        // reveal shows the new page still visibly scrolling into place.
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
         setPhase("opening");
         window.setTimeout(() => {
           setPhase("idle");

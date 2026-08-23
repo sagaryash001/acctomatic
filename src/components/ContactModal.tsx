@@ -52,9 +52,15 @@ export function ContactModal({
   useEffect(() => {
     if (!origin) return;
     const previousOverflow = document.body.style.overflow;
+    const previousOverscroll = document.body.style.overscrollBehavior;
     document.body.style.overflow = "hidden";
+    // `overflow: hidden` alone still lets iOS Safari rubber-band the page
+    // behind the modal when a touch drag starts past the modal's own
+    // scroll bounds; containing overscroll on body closes that gap.
+    document.body.style.overscrollBehavior = "contain";
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscroll;
     };
   }, [origin]);
 
@@ -225,7 +231,7 @@ export function ContactModal({
           />
 
           <motion.div
-            className="relative h-full overflow-y-auto"
+            className="relative h-full overflow-y-auto overscroll-contain"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

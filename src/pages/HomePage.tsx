@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button, ClickableCard, FeaturedClickableCard, Input, LinkButton, Textarea } from "@/components/ui";
 import { useDoors } from "@/components/DoorsTransition";
@@ -129,6 +129,24 @@ export function HomePage({
   // lag - show a shimmer in its place until the first frame is ready.
   const [videoReady, setVideoReady] = useState(false);
 
+  // Skip the autoplaying 3MB hero video on data-saver connections and for
+  // prefers-reduced-motion users - it's the single heaviest asset on the
+  // page and the least essential once motion/data is being conserved. The
+  // shimmer skeleton stays up as the (intentional) permanent placeholder.
+  const prefersReducedMotion = useReducedMotion();
+  const [saveData] = useState(() => {
+    const connection = (navigator as { connection?: { saveData?: boolean } }).connection;
+    return connection?.saveData === true;
+  });
+  const skipVideo = prefersReducedMotion || saveData;
+
+  // The scroll-linked blur re-paints the full-bleed video every scroll
+  // frame - real cost for little payoff on touchscreens, which have no
+  // hover affordance driving it and generally weaker GPUs. Desktop-only.
+  const [enableScrollBlur] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+
   return (
     <>
       {/* Hero header — pinned to the viewport, hides on scroll down and reveals on scroll up. */}
@@ -138,18 +156,20 @@ export function HomePage({
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
       >
         {!videoReady && <Skeleton className="absolute inset-0" />}
-        <motion.video
-          className="absolute left-1/2 top-1/2 h-auto min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
-          style={{ filter: smoothHeroBlur }}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onLoadedData={() => setVideoReady(true)}
-        >
-          <source src="/hero-bg.mp4" type="video/mp4" />
-        </motion.video>
+        {!skipVideo && (
+          <motion.video
+            className="absolute left-1/2 top-1/2 h-auto min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
+            style={enableScrollBlur ? { filter: smoothHeroBlur } : undefined}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onLoadedData={() => setVideoReady(true)}
+          >
+            <source src="/hero-bg.mp4" type="video/mp4" />
+          </motion.video>
+        )}
 
         <nav className="relative z-10 flex flex-wrap items-center justify-between gap-y-3 px-4 py-5 sm:px-6 sm:py-7">
           <span className="shrink-0 text-base font-semibold tracking-[-0.02em] text-white sm:text-lg">
