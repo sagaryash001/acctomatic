@@ -4,11 +4,13 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Badge, Button, LinkButton } from "@/components/ui";
 import { useDoors } from "@/components/DoorsTransition";
 import { Footer } from "@/components/Footer";
+import { PageNav } from "@/components/PageNav";
 import { ScrambleText } from "@/components/ScrambleText";
 import { Section } from "@/components/Section";
 import { type ContactOrigin } from "@/components/ContactModal";
 import { getFeature } from "@/lib/features";
 import { fadeInUp, stagger } from "@/lib/motion";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function FeaturePage({
   contactModal,
@@ -25,45 +27,12 @@ export function FeaturePage({
   };
 
   if (!feature) {
-    return (
-      <div className="bg-mesh min-h-screen">
-        <Section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-          <h1 className="text-3xl">Page not found.</h1>
-          <p className="mt-3 text-muted-foreground">That feature doesn't exist.</p>
-          <a
-            href="/"
-            onClick={goHome}
-            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-accent"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Acctomatic
-          </a>
-        </Section>
-      </div>
-    );
+    return <NotFoundPage contactModal={contactModal} />;
   }
 
   return (
     <div className="bg-mesh min-h-screen">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-7">
-        <a
-          href="/"
-          onClick={goHome}
-          className="text-lg font-semibold tracking-[-0.02em] text-foreground"
-        >
-          acct<span className="gradient-text">omatic</span>
-        </a>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={contactModal.open}
-            className="rounded-xl border border-border bg-card px-5 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-accent/30"
-          >
-            Contact Us
-          </button>
-          <LinkButton href="/#get-started" variant="primary" size="md">
-            <ScrambleText text="Get Started" />
-          </LinkButton>
-        </div>
-      </nav>
+      <PageNav contactModal={contactModal} />
 
       <Section className="pb-16 pt-4 md:pt-8">
         <a

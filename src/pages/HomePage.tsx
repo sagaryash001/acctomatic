@@ -5,6 +5,7 @@ import { Button, ClickableCard, FeaturedClickableCard, Input, LinkButton, Textar
 import { useDoors } from "@/components/DoorsTransition";
 import { Footer } from "@/components/Footer";
 import { FeatureRing } from "@/components/FeatureRing";
+import { MegaMenu } from "@/components/MegaMenu";
 import { Puzzle } from "@/components/Puzzle";
 import { ScrambleText } from "@/components/ScrambleText";
 import { Section, SectionIntro } from "@/components/Section";
@@ -92,6 +93,7 @@ export function HomePage({
 }: {
   contactModal: { origin: ContactOrigin | null; open: (event: React.MouseEvent) => void; close: () => void };
 }) {
+  const { navigateWithDoors } = useDoors();
   const footerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: footerRef,
@@ -149,20 +151,21 @@ export function HomePage({
           <source src="/hero-bg.mp4" type="video/mp4" />
         </motion.video>
 
-        <nav className="relative z-10 flex items-center justify-between px-6 py-7">
-          <span className="text-lg font-semibold tracking-[-0.02em] text-white">
+        <nav className="relative z-10 flex flex-wrap items-center justify-between gap-y-3 px-4 py-5 sm:px-6 sm:py-7">
+          <span className="shrink-0 text-base font-semibold tracking-[-0.02em] text-white sm:text-lg">
             acct<span className="gradient-text">omatic</span>
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <MegaMenu dark />
             <button
               onClick={contactModal.open}
-              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
+              className="rounded-xl border border-white/50 bg-black/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
             >
               Contact Us
             </button>
             <a
               href="#get-started"
-              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
+              className="rounded-xl border border-white/50 bg-black/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
             >
               <ScrambleText text="Get Started" />
             </a>
@@ -220,7 +223,7 @@ export function HomePage({
                 Start Free Trial
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" onClick={() => navigateWithDoors("/demo")}>
                 Book a Demo
               </Button>
               <Button variant="ghost" size="lg">

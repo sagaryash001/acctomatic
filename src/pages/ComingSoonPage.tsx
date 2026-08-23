@@ -1,9 +1,8 @@
 import { ArrowLeft } from "lucide-react";
-import { Badge, LinkButton } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { useDoors } from "@/components/DoorsTransition";
 import { Footer } from "@/components/Footer";
-import { MegaMenu } from "@/components/MegaMenu";
-import { ScrambleText } from "@/components/ScrambleText";
+import { PageNav } from "@/components/PageNav";
 import { Section } from "@/components/Section";
 import { type ContactOrigin } from "@/components/ContactModal";
 
@@ -25,25 +24,9 @@ export function ComingSoonPage({
 
   return (
     <div className="bg-mesh min-h-screen">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-7">
-        <a href="/" onClick={goHome} className="text-lg font-semibold tracking-[-0.02em] text-foreground">
-          acct<span className="gradient-text">omatic</span>
-        </a>
-        <div className="flex items-center gap-3">
-          <MegaMenu />
-          <button
-            onClick={contactModal.open}
-            className="rounded-xl border border-border bg-card px-5 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-accent/30"
-          >
-            Contact Us
-          </button>
-          <LinkButton href="/#get-started" variant="primary" size="md">
-            <ScrambleText text="Get Started" />
-          </LinkButton>
-        </div>
-      </nav>
+      <PageNav contactModal={contactModal} />
 
-      <Section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <Section className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center sm:px-6">
         <div className="glass-panel max-w-lg rounded-[2rem] p-10 md:p-14">
           <Badge pulse>Coming Soon</Badge>
           <h1 className="mt-5 text-4xl tracking-[-0.02em] md:text-5xl">{title}</h1>

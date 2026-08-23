@@ -67,8 +67,8 @@ export function MegaMenu({ dark = false }: { dark?: boolean }) {
       </button>
 
       {open && (
-        <div className="glass-panel absolute right-0 top-full z-50 mt-3 w-[420px] rounded-2xl p-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="glass-panel absolute right-0 top-full z-50 mt-3 w-[min(420px,calc(100vw-2rem))] rounded-2xl p-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <h4 className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">Company</h4>
               <ul className="mt-3 space-y-3">

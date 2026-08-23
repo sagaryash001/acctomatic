@@ -12,6 +12,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 const ComingSoonPage = lazy(() =>
   import("@/pages/ComingSoonPage").then((module) => ({ default: module.ComingSoonPage })),
 );
+const TeamPage = lazy(() => import("@/pages/TeamPage").then((module) => ({ default: module.TeamPage })));
 
 export default function App() {
   const contactModal = useContactModal();
@@ -32,16 +33,7 @@ export default function App() {
               />
             }
           />
-          <Route
-            path="/team"
-            element={
-              <ComingSoonPage
-                title="Team"
-                description="We're putting together a page to introduce the people behind Acctomatic."
-                contactModal={contactModal}
-              />
-            }
-          />
+          <Route path="/team" element={<TeamPage contactModal={contactModal} />} />
           <Route
             path="/blog"
             element={
@@ -78,6 +70,16 @@ export default function App() {
               <ComingSoonPage
                 title="Affiliate"
                 description="Our affiliate program is in the works. Get in touch if you'd like to partner early."
+                contactModal={contactModal}
+              />
+            }
+          />
+          <Route
+            path="/demo"
+            element={
+              <ComingSoonPage
+                title="Book a Demo"
+                description="Guided demos are being scheduled by hand for now — reach out and we'll set one up personally."
                 contactModal={contactModal}
               />
             }

@@ -84,18 +84,21 @@ h2 {
       0 0 0 1px rgba(15, 23, 42, 0.04);
   }
 
+  /*
+   * No `position` declared here on purpose: it previously set its own
+   * `position: relative`, which - being in the same Tailwind layer as the
+   * `absolute` utility a caller applies via className - won the cascade tie
+   * unpredictably and silently collapsed the element to zero size. Painting
+   * the shimmer as a second animated background layer sidesteps needing any
+   * positioning context at all, so callers can add any position utility
+   * they like with no conflict.
+   */
   .skeleton-shimmer {
-    position: relative;
     overflow: hidden;
-    background: var(--foreground);
-  }
-
-  .skeleton-shimmer::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+    background-color: var(--foreground);
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
     background-size: 200% 100%;
+    background-repeat: no-repeat;
     animation: shimmer 1.4s ease-in-out infinite;
   }
 
