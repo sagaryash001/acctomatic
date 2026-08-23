@@ -1,9 +1,10 @@
 import { Suspense, lazy } from "react";
 import { MotionConfig } from "framer-motion";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ContactModal, useContactModal } from "@/components/ContactModal";
 import { DoorsProvider } from "@/components/DoorsTransition";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import { AuthProvider } from "@/lib/auth/useAuth";
 import { HomePage } from "@/pages/HomePage";
 import { FeaturePage } from "@/pages/FeaturePage";
@@ -29,6 +30,24 @@ const SignUpPage = lazy(() => import("@/pages/SignUpPage").then((module) => ({ d
 const LoginPage = lazy(() => import("@/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
 const CheckEmailPage = lazy(() =>
   import("@/pages/CheckEmailPage").then((module) => ({ default: module.CheckEmailPage })),
+);
+const AdminLayout = lazy(() =>
+  import("@/components/admin/AdminLayout").then((module) => ({ default: module.AdminLayout })),
+);
+const AdminLeadsPage = lazy(() =>
+  import("@/pages/admin/AdminLeadsPage").then((module) => ({ default: module.AdminLeadsPage })),
+);
+const AdminFaqPage = lazy(() =>
+  import("@/pages/admin/AdminFaqPage").then((module) => ({ default: module.AdminFaqPage })),
+);
+const AdminBlogPage = lazy(() =>
+  import("@/pages/admin/AdminBlogPage").then((module) => ({ default: module.AdminBlogPage })),
+);
+const AdminPricingPage = lazy(() =>
+  import("@/pages/admin/AdminPricingPage").then((module) => ({ default: module.AdminPricingPage })),
+);
+const AdminStaticPagesPage = lazy(() =>
+  import("@/pages/admin/AdminStaticPagesPage").then((module) => ({ default: module.AdminStaticPagesPage })),
 );
 
 export default function App() {
@@ -59,6 +78,21 @@ export default function App() {
               <Route path="/signup" element={<SignUpPage contactModal={contactModal} />} />
               <Route path="/login" element={<LoginPage contactModal={contactModal} />} />
               <Route path="/check-email" element={<CheckEmailPage contactModal={contactModal} />} />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAdmin>
+                    <AdminLayout />
+                  </RequireAdmin>
+                }
+              >
+                <Route index element={<Navigate to="leads" replace />} />
+                <Route path="leads" element={<AdminLeadsPage />} />
+                <Route path="faq" element={<AdminFaqPage />} />
+                <Route path="blog" element={<AdminBlogPage />} />
+                <Route path="pricing" element={<AdminPricingPage />} />
+                <Route path="pages" element={<AdminStaticPagesPage />} />
+              </Route>
               <Route
                 path="/demo"
                 element={
