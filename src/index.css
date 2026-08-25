@@ -149,6 +149,54 @@ h2 {
   }
 }
 
+/*
+ * Admin panel theme - scoped to `.admin-shell` rather than touching :root,
+ * so the marketing site's light theme is completely untouched. Tailwind's
+ * color utilities (bg-card, text-muted-foreground, border-border, etc.)
+ * already resolve to these CSS vars, so every existing semantic class
+ * "just works" inside the admin shell without any component rewrites.
+ */
+.admin-shell {
+  --background: #05070d;
+  --foreground: #e7ecf6;
+  --muted: #0d1424;
+  --muted-foreground: #8b94ab;
+  --accent: #3d7bff;
+  --accent-secondary: #7db4ff;
+  --accent-foreground: #ffffff;
+  --border: rgba(148, 163, 184, 0.14);
+  --card: #0a0f1e;
+  --ring: #3d7bff;
+  color-scheme: dark;
+}
+
+@layer utilities {
+  /* Faint HUD grid, brightening slightly toward the top where the ambient
+     glows sit, so the panel reads as lit from above rather than flat. */
+  .admin-grid-bg {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(rgba(125, 180, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125, 180, 255, 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .admin-glass {
+    position: relative;
+    background: linear-gradient(165deg, rgba(148, 180, 255, 0.08), rgba(148, 180, 255, 0.02) 60%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 20px 40px -24px rgba(0, 0, 0, 0.6);
+  }
+
+  .admin-glow-ring {
+    box-shadow: 0 0 0 1px rgba(61, 123, 255, 0.4), 0 0 24px -4px rgba(61, 123, 255, 0.45);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
