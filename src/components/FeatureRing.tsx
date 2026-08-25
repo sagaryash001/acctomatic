@@ -1,4 +1,4 @@
-import { useRef, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, type ComponentType } from "react";
 import { Eye, Link2, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,21 +40,22 @@ const features: Feature[] = [
   },
 ];
 
-const RADIUS = 340;
-const ANGLE_STEP = 360 / features.length;
+const CARD_WIDTH = 288; // w-72
+const CARD_GAP = 32; // gap-8
+const STEP = CARD_WIDTH + CARD_GAP;
+const SET_WIDTH = features.length * STEP;
+const TRANSITION_MS = 700;
+const AUTOPLAY_INTERVAL_MS = 3200;
+const AUTOPLAY_RESUME_DELAY_MS = 2000;
 
-function RingCard({ feature, index }: { feature: Feature; index: number }) {
+function FeatureCard({ feature }: { feature: Feature }) {
   const Icon = feature.icon;
   return (
     <div
       className={cn(
-        "absolute left-1/2 top-1/2 flex h-80 w-72 flex-col rounded-2xl border border-border p-8 shadow-xl",
+        "flex h-80 w-72 shrink-0 flex-col rounded-2xl border border-border p-8 shadow-xl",
         feature.accent ? "bg-gradient-to-br from-accent to-accent-secondary text-accent-foreground" : "bg-card",
       )}
-      style={{
-        transform: `translate(-50%, -50%) rotateY(${index * ANGLE_STEP}deg) translateZ(${RADIUS}px)`,
-        backfaceVisibility: "hidden",
-      }}
     >
       <div
         className={cn(
@@ -78,63 +79,136 @@ function RingCard({ feature, index }: { feature: Feature; index: number }) {
 }
 
 /**
- * Draggable 3D ring carousel — cards sit evenly around a circle via
- * rotateY + translateZ, and dragging horizontally spins the whole ring
- * (the classic GSAP spinning-ring demo, without the GSAP dependency).
- * The rotation is written straight to the node so drag stays 1:1 with the
- * pointer and never round-trips through React state.
+ * Auto-advancing horizontal carousel. The card list is tripled so the strip
+ * always has a full set's worth of buffer on either side; autoplay and drag
+ * both move the same `offset` (written straight to the node — no state
+ * round-trip, so drag stays 1:1 with the pointer). Crossing a full set's
+ * width snaps `offset` back by one set-width with the transition disabled
+ * for that frame, which is invisible since the content repeats — so the
+ * strip appears to glide on forever in either direction.
  */
 export function FeatureRing() {
-  const ringRef = useRef<HTMLDivElement>(null);
-  const angle = useRef(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const offset = useRef(-SET_WIDTH);
+  const dragging = useRef(false);
   const lastX = useRef<number | null>(null);
+  const autoplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const normalizeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const applyRotation = () => {
-    if (ringRef.current) {
-      ringRef.current.style.transform = `rotateY(${angle.current}deg)`;
+  const applyOffset = useCallback((withTransition: boolean) => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = withTransition
+      ? `transform ${TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
+      : "none";
+    track.style.transform = `translateX(${offset.current}px)`;
+  }, []);
+
+  // Keeps offset within [-2*SET_WIDTH, -SET_WIDTH] so a full loop of buffer
+  // cards always exists on both sides, wrapping invisibly once crossed.
+  const normalize = useCallback(() => {
+    if (offset.current <= -2 * SET_WIDTH) {
+      offset.current += SET_WIDTH;
+      applyOffset(false);
+    } else if (offset.current > -SET_WIDTH) {
+      offset.current -= SET_WIDTH;
+      applyOffset(false);
     }
+  }, [applyOffset]);
+
+  const scheduleNormalize = useCallback(() => {
+    if (normalizeTimer.current) clearTimeout(normalizeTimer.current);
+    normalizeTimer.current = setTimeout(normalize, TRANSITION_MS + 20);
+  }, [normalize]);
+
+  const advance = useCallback(() => {
+    offset.current -= STEP;
+    applyOffset(true);
+    scheduleNormalize();
+  }, [applyOffset, scheduleNormalize]);
+
+  const stopAutoplay = useCallback(() => {
+    if (autoplayTimer.current) {
+      clearInterval(autoplayTimer.current);
+      autoplayTimer.current = null;
+    }
+  }, []);
+
+  const startAutoplay = useCallback(() => {
+    stopAutoplay();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    autoplayTimer.current = setInterval(advance, AUTOPLAY_INTERVAL_MS);
+  }, [advance, stopAutoplay]);
+
+  useEffect(() => {
+    applyOffset(false);
+    startAutoplay();
+    return () => {
+      stopAutoplay();
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+      if (normalizeTimer.current) clearTimeout(normalizeTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pauseForInteraction = () => {
+    stopAutoplay();
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+  };
+
+  const scheduleResume = () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(startAutoplay, AUTOPLAY_RESUME_DELAY_MS);
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragging.current = true;
     lastX.current = e.clientX;
+    pauseForInteraction();
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (lastX.current === null) return;
-    angle.current += (e.clientX - lastX.current) * 0.35;
+    if (!dragging.current || lastX.current === null) return;
+    offset.current += e.clientX - lastX.current;
     lastX.current = e.clientX;
-    applyRotation();
+    applyOffset(false);
+    normalize();
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    dragging.current = false;
     lastX.current = null;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
+    offset.current = Math.round(offset.current / STEP) * STEP;
+    applyOffset(true);
+    scheduleNormalize();
+    scheduleResume();
   };
 
   return (
     <div
-      className="relative mx-auto h-[560px] w-full select-none overflow-hidden"
-      style={{ perspective: 1400 }}
+      className="relative mx-auto w-full select-none overflow-hidden"
+      onPointerEnter={pauseForInteraction}
+      onPointerLeave={scheduleResume}
     >
       <div
-        ref={ringRef}
-        className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing"
-        style={{ transformStyle: "preserve-3d", transform: "rotateY(0deg)" }}
+        ref={trackRef}
+        className="flex cursor-grab touch-pan-y gap-8 active:cursor-grabbing"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        {features.map((feature, i) => (
-          <RingCard key={feature.title} feature={feature} index={i} />
+        {[...features, ...features, ...features].map((feature, i) => (
+          <FeatureCard key={`${feature.title}-${i}`} feature={feature} />
         ))}
       </div>
-      <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-sm text-muted-foreground">
-        Drag to rotate
-      </p>
+      <p className="pointer-events-none mt-4 text-center text-sm text-muted-foreground">Drag to browse</p>
     </div>
   );
 }

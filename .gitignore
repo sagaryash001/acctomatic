@@ -7,3 +7,5 @@ dist-ssr/
 .claude/
 graphify-out/
 .assets-src/
+.agents/
+skills-lock.json
