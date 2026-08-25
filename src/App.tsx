@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Facebook, Instagram, Linkedin } from "lucide-react";
 import {
   Badge,
@@ -8,11 +8,11 @@ import {
   FeaturedClickableCard,
   InvertedSection,
   Input,
-  LinkButton,
   Textarea,
 } from "@/components/ui";
 import { ContactModal, useContactModal } from "@/components/ContactModal";
 import { FeatureRing } from "@/components/FeatureRing";
+import { ScrollHero } from "@/components/ScrollHero";
 import { Puzzle, type PuzzleFill } from "@/components/Puzzle";
 import { fadeInUp, stagger, viewportOnce } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -97,109 +97,12 @@ export default function App() {
   const footerOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const contactModal = useContactModal();
 
-  // Hero-as-header: hides once you scroll past the fold, reappears only back near the top.
-  // Uses a native scroll listener rather than useMotionValueEvent - the motion
-  // value's "change" event can silently miss a very large/fast scroll jump
-  // (e.g. a big scrollTo or a fast fling), which left the header stuck hidden
-  // even once scrollY had genuinely returned to 0.
-  const { scrollY } = useScroll();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      const current = window.scrollY;
-      if (current < 120) {
-        setHeaderHidden(false);
-      } else if (current > 240) {
-        setHeaderHidden(true);
-      }
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const smoothScrollY = useSpring(scrollY, { stiffness: 100, damping: 30, restDelta: 0.001 });
-  const smoothHeroBlur = useTransform(smoothScrollY, [0, 600], ["blur(0px)", "blur(16px)"]);
-
   return (
     <>
-      {/* Hero header — pinned to the viewport, hides on scroll down and reveals on scroll up. */}
-      <motion.header
-        className="fixed inset-x-0 top-0 z-30 h-dvh min-h-[640px] w-full overflow-hidden"
-        animate={{ y: headerHidden ? "-100%" : "0%" }}
-        transition={{ type: "spring", stiffness: 320, damping: 34 }}
-      >
-        <motion.video
-          className="absolute left-1/2 top-1/2 h-auto min-h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
-          style={{ filter: smoothHeroBlur }}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        >
-          <source src="/hero-bg.mp4" type="video/mp4" />
-        </motion.video>
-
-        <nav className="relative z-10 flex items-center justify-between px-6 py-7">
-          <span className="text-lg font-semibold tracking-[-0.02em] text-white">
-            acct<span className="gradient-text">omatic</span>
-          </span>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={contactModal.open}
-              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
-            >
-              Contact Us
-            </button>
-            <a
-              href="#get-started"
-              className="rounded-xl border border-white/50 bg-black/20 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/80 hover:bg-black/35"
-            >
-              Get Started
-            </a>
-          </div>
-        </nav>
-
-        <Section className="relative flex h-[calc(100%-72px)] items-center py-16">
-          <motion.div variants={stagger} initial="hidden" animate="visible" className="max-w-2xl">
-            <motion.h1
-              variants={fadeInUp}
-              className="relative text-[2.75rem] leading-[1.05] tracking-[-0.02em] text-white sm:text-6xl md:text-[5.25rem]"
-            >
-              Documents in. <span className="gradient-text">Manual work out.</span>
-            </motion.h1>
-            <motion.p
-              variants={fadeInUp}
-              className="mt-6 max-w-lg text-lg leading-relaxed text-white/85"
-            >
-              Acctomatic sits behind the tools you already use — email, Drive, Slack, your ERP —
-              reads every document that arrives, verifies what it finds, and only brings you the
-              exceptions.
-            </motion.p>
-            <motion.div variants={fadeInUp} className="mt-10 flex flex-wrap gap-4">
-              <Button variant="primary" size="lg" className="group">
-                Get Started
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-              <LinkButton
-                href="#how-it-works"
-                variant="secondary"
-                size="lg"
-                className="border-white/50 bg-black/20 text-white backdrop-blur-sm hover:border-white/80 hover:bg-black/35"
-              >
-                See How It Works
-              </LinkButton>
-            </motion.div>
-          </motion.div>
-        </Section>
-      </motion.header>
+      <ScrollHero />
 
       <div className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-background shadow-[0_40px_60px_-20px_rgba(15,23,42,0.25)]">
       <main>
-        {/* Spacer — reserves the space the fixed hero header occupies. */}
-        <div aria-hidden className="h-dvh min-h-[640px] w-full" />
-
       {/* Get started */}
       <Section id="get-started">
         <SectionIntro label="Get Started" title="Take the next step with Acctomatic." showLabel={false} />

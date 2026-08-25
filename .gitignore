@@ -6,3 +6,4 @@ dist-ssr/
 *.tsbuildinfo
 .claude/
 graphify-out/
+.assets-src/

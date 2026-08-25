@@ -15,6 +15,15 @@
   --border: #e2e8f0;
   --card: #ffffff;
   --ring: #0052ff;
+
+  /* ScrollHero palette — warm city/finance vibe: royal blue, white, cream, oak wood. */
+  --hero-royal: #0052ff;
+  --hero-royal-soft: #4d7cff;
+  --hero-cream: #f6f1e7;
+  --hero-cream-dim: #ece4d3;
+  --hero-oak: #8a6240;
+  --hero-oak-dark: #4a3524;
+  --hero-ink: #16130f;
 }
 
 * {

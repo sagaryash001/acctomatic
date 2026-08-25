@@ -18,6 +18,15 @@ export default {
         border: "var(--border)",
         card: "var(--card)",
         ring: "var(--ring)",
+        hero: {
+          royal: "var(--hero-royal)",
+          "royal-soft": "var(--hero-royal-soft)",
+          cream: "var(--hero-cream)",
+          "cream-dim": "var(--hero-cream-dim)",
+          oak: "var(--hero-oak)",
+          "oak-dark": "var(--hero-oak-dark)",
+          ink: "var(--hero-ink)",
+        },
       },
       fontFamily: {
         display: ["Calistoga", "Georgia", "serif"],
