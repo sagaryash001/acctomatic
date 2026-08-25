@@ -4,8 +4,8 @@ import { Badge, LinkButton } from "@/components/ui";
 import { fadeInUp, stagger } from "@/lib/motion";
 
 // Must match the number of files actually extracted into public/frames
-// (frame_0001.jpg .. frame_0284.jpg). Verified via `ls public/frames | wc -l`.
-const FRAME_COUNT = 284;
+// (frame_0001.jpg .. frame_0311.jpg). Verified via `ls public/frames | wc -l`.
+const FRAME_COUNT = 311;
 const FRAME_PATH = (index: number) => `/frames/frame_${String(index + 1).padStart(4, "0")}.jpg`;
 
 // Scroll-progress windows (0..1 across the hero's scroll range). Every one of
