@@ -4,20 +4,20 @@ import { Badge, LinkButton } from "@/components/ui";
 import { fadeInUp, stagger } from "@/lib/motion";
 
 // Must match the number of files actually extracted into public/frames
-// (frame_0001.jpg .. frame_0120.jpg). Verified via `ls public/frames | wc -l`.
-const FRAME_COUNT = 120;
+// (frame_0001.jpg .. frame_0168.jpg). Verified via `ls public/frames | wc -l`.
+const FRAME_COUNT = 168;
 const FRAME_PATH = (index: number) => `/frames/frame_${String(index + 1).padStart(4, "0")}.jpg`;
 
 // Scroll-progress windows (0..1 across the hero's scroll range). Every one of
 // these drives both the canvas frame index and a text beat's opacity from the
 // same `progress` value computed in the rAF loop below — the identity block's
 // initial reveal is the sole exception, handled by framer-motion on mount.
-const IDENTITY_OUT: [number, number] = [0.0, 0.09];
-const RIGHT_IN: [number, number] = [0.1, 0.16];
-const RIGHT_OUT: [number, number] = [0.29, 0.34];
+const IDENTITY_OUT: [number, number] = [0.0, 0.1];
+const RIGHT_IN: [number, number] = [0.12, 0.18];
+const RIGHT_OUT: [number, number] = [0.28, 0.33];
 const LEFT_IN: [number, number] = [0.35, 0.41];
-const LEFT_OUT: [number, number] = [0.54, 0.59];
-const CLOSING_IN: [number, number] = [0.6, 0.68];
+const LEFT_OUT: [number, number] = [0.55, 0.6];
+const CLOSING_IN: [number, number] = [0.62, 0.7];
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
@@ -83,14 +83,25 @@ function beatOpacity(
   return opacity;
 }
 
-function applyBeat(el: HTMLElement | null, opacity: number) {
-  if (!el) return;
-  el.style.opacity = String(opacity);
-  el.style.transform = `translateY(${(1 - opacity) * 18}px)`;
-  el.style.pointerEvents = opacity > 0.05 ? "auto" : "none";
+// Skip re-writing a style property when the value hasn't changed. Cheap, but
+// it avoids ~10 no-op style writes per element per frame while a beat is
+// holding steady at 0 or 1 opacity (i.e. almost the entire scroll range).
+function setStyleIfChanged(el: HTMLElement, prop: "opacity" | "transform" | "pointerEvents", value: string) {
+  if (el.style[prop] !== value) el.style[prop] = value;
 }
 
-/** Draws `img` into the canvas cropped to fill it entirely, like CSS background-size: cover. */
+function applyBeat(el: HTMLElement | null, opacity: number) {
+  if (!el) return;
+  setStyleIfChanged(el, "opacity", String(opacity));
+  setStyleIfChanged(el, "transform", `translateY(${(1 - opacity) * 18}px)`);
+  setStyleIfChanged(el, "pointerEvents", opacity > 0.05 ? "auto" : "none");
+}
+
+/**
+ * Draws `img` into the canvas cropped to fill it entirely (like CSS
+ * background-size: cover), then lays a legibility gradient on top — folded
+ * into the same canvas paint instead of a separate always-on DOM layer.
+ */
 function drawFrameCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -111,6 +122,13 @@ function drawFrameCover(
     sy = (img.naturalHeight - sh) / 2;
   }
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvasWidth, canvasHeight);
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+  gradient.addColorStop(0, "rgba(22, 19, 15, 0.45)");
+  gradient.addColorStop(0.4, "rgba(22, 19, 15, 0.05)");
+  gradient.addColorStop(1, "rgba(22, 19, 15, 0.55)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 }
 
 export function ScrollHero() {
@@ -126,12 +144,19 @@ export function ScrollHero() {
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const loadedRef = useRef<boolean[]>(Array(FRAME_COUNT).fill(false));
   const lastDrawnIndexRef = useRef(-1);
+  const hasStartedLoadingRef = useRef(false);
 
   // Kick off every frame request up front. The rAF loop never advances the
   // canvas past a target index until that image's onload has actually fired —
   // a bare draw attempt on an unloaded <img> is not enough, or the hero can
   // render blank on a fresh, slow-network load.
+  //
+  // Guarded with a ref (rather than relying on an empty dep array alone)
+  // because React StrictMode's dev-only double-invoke has no cleanup to
+  // cancel this one — without the guard it would fire all 168 requests twice.
   useEffect(() => {
+    if (hasStartedLoadingRef.current) return;
+    hasStartedLoadingRef.current = true;
     const images: HTMLImageElement[] = [];
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
@@ -154,15 +179,27 @@ export function ScrollHero() {
       const canvas = canvasRef.current;
 
       if (wrapper && pin && canvas) {
+        // ---- READ (once, up front) ----
+        // The pin/canvas always fill the viewport exactly (position: fixed,
+        // h-dvh w-full) whenever they're actually pinned, so canvas sizing
+        // reads from window.innerWidth/Height rather than a second
+        // getBoundingClientRect() call on the canvas itself. That second call
+        // used to run right after applyPin's style write below, forcing a
+        // synchronous layout flush on every single animation frame — the
+        // main cause of the scroll jank. Reading everything before writing
+        // anything keeps this loop reflow-free.
         const wrapperRect = wrapper.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        applyPin(pin, wrapperRect, viewportHeight);
-        const progress = progressFromRect(wrapperRect, viewportHeight);
-
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const rect = canvas.getBoundingClientRect();
-        const width = Math.round(rect.width * dpr);
-        const height = Math.round(rect.height * dpr);
+
+        // ---- COMPUTE ----
+        const progress = progressFromRect(wrapperRect, viewportHeight);
+        const width = Math.round(viewportWidth * dpr);
+        const height = Math.round(viewportHeight * dpr);
+
+        // ---- WRITE ----
+        applyPin(pin, wrapperRect, viewportHeight);
         const sizeChanged = canvas.width !== width || canvas.height !== height;
         if (sizeChanged && width > 0 && height > 0) {
           canvas.width = width;
@@ -190,7 +227,10 @@ export function ScrollHero() {
         applyBeat(leftRef.current, beatOpacity(progress, LEFT_IN, LEFT_OUT));
         const closingOpacity = beatOpacity(progress, CLOSING_IN, null);
         applyBeat(closingRef.current, closingOpacity);
-        if (ctaRef.current) ctaRef.current.tabIndex = closingOpacity > 0.5 ? 0 : -1;
+        const nextTabIndex = closingOpacity > 0.5 ? 0 : -1;
+        if (ctaRef.current && ctaRef.current.tabIndex !== nextTabIndex) {
+          ctaRef.current.tabIndex = nextTabIndex;
+        }
       }
 
       raf = requestAnimationFrame(tick);
@@ -213,14 +253,11 @@ export function ScrollHero() {
           organized workspace.
         </span>
 
-        {/* Legibility scrim — kept subtle so the footage still reads through. */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-hero-ink/45 via-hero-ink/5 to-hero-ink/55" />
-
         {/* Identity block — rises + fades in on mount (time-based), independent of image load state. */}
         <div ref={identityRef} className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <motion.div initial="hidden" animate="visible" variants={stagger} className="flex flex-col items-center gap-6">
             <motion.div variants={fadeInUp}>
-              <Badge pulse className="border-hero-cream/30 bg-hero-ink/40 text-hero-cream backdrop-blur-sm [&_span:last-child]:text-hero-cream">
+              <Badge pulse className="border-hero-cream/30 bg-hero-ink/70 text-hero-cream [&_span:last-child]:text-hero-cream">
                 Acctomatic · Document Autopilot
               </Badge>
             </motion.div>
@@ -232,6 +269,13 @@ export function ScrollHero() {
               <br />
               Straight into your ledger.
             </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              className="max-w-xl text-base leading-relaxed text-hero-cream sm:text-lg"
+            >
+              AI that reads invoices and receipts, checks the numbers, and books them
+              automatically — so your team stops doing manual data entry.
+            </motion.p>
           </motion.div>
         </div>
 
@@ -241,8 +285,9 @@ export function ScrollHero() {
           className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 opacity-0 md:justify-end md:px-16"
         >
           <p className="max-w-sm text-center text-lg leading-relaxed text-hero-cream sm:text-xl md:max-w-md md:text-right">
-            No check-in. No queue. Every invoice and receipt is read the instant it lands in your
-            inbox.
+            Acctomatic connects to your inbox, Drive, and accounting software. Every invoice,
+            receipt, and statement is read the moment it arrives — no forwarding, no uploading,
+            no manual entry.
           </p>
         </div>
 
@@ -252,8 +297,9 @@ export function ScrollHero() {
           className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 opacity-0 md:justify-start md:px-16"
         >
           <p className="max-w-sm text-center text-lg leading-relaxed text-hero-cream sm:text-xl md:max-w-md md:text-left">
-            Acctomatic verifies the numbers, chases what's missing, and books what's already
-            true.
+            Each document is checked against the numbers, the math, and your own rules. What
+            matches books itself. What doesn't gets flagged for a quick look — not a full
+            review.
           </p>
         </div>
 
@@ -262,11 +308,14 @@ export function ScrollHero() {
           ref={closingRef}
           className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center opacity-0"
         >
-          <div className="flex flex-col items-center gap-7 rounded-[2rem] bg-hero-ink/50 px-8 py-10 backdrop-blur-md sm:px-14 sm:py-12">
+          <div className="flex flex-col items-center gap-5 rounded-[2rem] bg-hero-ink/75 px-8 py-10 sm:px-14 sm:py-12">
             <h2 className="text-3xl leading-[1.1] tracking-[-0.02em] text-white sm:text-5xl md:text-[3.25rem]">
               Your books, on autopilot.
             </h2>
-            <LinkButton ref={ctaRef} href="#get-started" variant="primary" size="lg" tabIndex={-1}>
+            <p className="max-w-md text-base leading-relaxed text-hero-cream sm:text-lg">
+              One inbox for every invoice and receipt. Verified data, booked automatically.
+            </p>
+            <LinkButton ref={ctaRef} href="#get-started" variant="primary" size="lg" tabIndex={-1} className="mt-2">
               Book a Demo
             </LinkButton>
           </div>
