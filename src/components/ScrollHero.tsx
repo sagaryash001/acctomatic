@@ -4,8 +4,8 @@ import { Badge, LinkButton } from "@/components/ui";
 import { fadeInUp, stagger } from "@/lib/motion";
 
 // Must match the number of files actually extracted into public/frames
-// (frame_0001.jpg .. frame_0168.jpg). Verified via `ls public/frames | wc -l`.
-const FRAME_COUNT = 168;
+// (frame_0001.jpg .. frame_0284.jpg). Verified via `ls public/frames | wc -l`.
+const FRAME_COUNT = 284;
 const FRAME_PATH = (index: number) => `/frames/frame_${String(index + 1).padStart(4, "0")}.jpg`;
 
 // Scroll-progress windows (0..1 across the hero's scroll range). Every one of
@@ -249,8 +249,9 @@ export function ScrollHero() {
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
         <span className="sr-only">
-          A slow aerial approach into a warm, modern finance office building, arriving at a calm,
-          organized workspace.
+          A slow aerial approach into a warm, modern finance office building: past the entrance,
+          through the lounge, past a desk buried in paperwork, through documents being organized,
+          to a clean desk and a calm meeting room, before pulling back out over the city.
         </span>
 
         {/* Identity block — rises + fades in on mount (time-based), independent of image load state. */}
