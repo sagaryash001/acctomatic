@@ -1,4 +1,12 @@
 import { useCallback, useEffect, useRef, type ComponentType } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  type AnimationPlaybackControls,
+} from "framer-motion";
 import { Eye, Link2, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,19 +21,19 @@ const features: Feature[] = [
   {
     title: "Trust Engine",
     description:
-      "Every field is checked against evidence, arithmetic, and your own rules — before it's ever trusted.",
+      "Every field is checked against evidence, arithmetic, and your own rules, before it's ever trusted.",
     icon: ShieldCheck,
     accent: true,
   },
   {
     title: "Works With Your Stack",
-    description: "Email, Drive, Slack, Teams, your ERP — no new tool to learn, no workflow to change.",
+    description: "Email, Drive, Slack, Teams, your ERP. No new tool to learn, no workflow to change.",
     icon: Link2,
   },
   {
     title: "Continuous Sync",
     description:
-      "The moment a document lands, Acctomatic reads it, verifies it, and files it — in the background.",
+      "The moment a document lands, Acctomatic reads it, verifies it, and files it in the background.",
     icon: RefreshCw,
   },
   {
@@ -44,9 +52,17 @@ const CARD_WIDTH = 288; // w-72
 const CARD_GAP = 32; // gap-8
 const STEP = CARD_WIDTH + CARD_GAP;
 const SET_WIDTH = features.length * STEP;
-const TRANSITION_MS = 700;
 const AUTOPLAY_INTERVAL_MS = 3200;
 const AUTOPLAY_RESUME_DELAY_MS = 2000;
+// Apple's exponential-decay projection (Designing Fluid Interfaces, WWDC 2018).
+// Tuned steeper than the ~0.998 "free scroll" value since this projects onto
+// discrete 320px card steps, not continuous content - a gentle release should
+// still land on the nearest card, only a real flick should throw an extra one.
+const DECEL = 0.996;
+
+function project(velocity: number) {
+  return (velocity / 1000) * DECEL / (1 - DECEL);
+}
 
 function FeatureCard({ feature }: { feature: Feature }) {
   const Icon = feature.icon;
@@ -79,54 +95,40 @@ function FeatureCard({ feature }: { feature: Feature }) {
 }
 
 /**
- * Auto-advancing horizontal carousel. The card list is tripled so the strip
- * always has a full set's worth of buffer on either side; autoplay and drag
- * both move the same `offset` (written straight to the node — no state
- * round-trip, so drag stays 1:1 with the pointer). Crossing a full set's
- * width snaps `offset` back by one set-width with the transition disabled
- * for that frame, which is invisible since the content repeats — so the
- * strip appears to glide on forever in either direction.
+ * Auto-advancing horizontal carousel, driven by a single spring-animated
+ * MotionValue rather than a CSS transition. That's what makes it
+ * interruptible: `x.get()` always reflects the live on-screen position, even
+ * mid-animation, so grabbing the strip while it's still settling from the
+ * last auto-advance retargets from where it actually is instead of jumping
+ * to whatever the in-flight transition's target happened to be. Drag release
+ * tracks real pointer velocity and projects the landing card the way a flick
+ * would in a native scroll view, then hands that velocity to the settling
+ * spring so there's no seam between the drag and the animation.
+ *
+ * The card list is tripled so the strip always has a full set's worth of
+ * buffer on either side; crossing a full set's width snaps `x` back by one
+ * set-width with no animation, invisible since the content repeats.
  */
 export function FeatureRing() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const offset = useRef(-SET_WIDTH);
-  const dragging = useRef(false);
-  const lastX = useRef<number | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  const x = useMotionValue(-SET_WIDTH);
+  const controlsRef = useRef<AnimationPlaybackControls | null>(null);
+  const historyRef = useRef<{ t: number; x: number }[]>([]);
+  const draggingRef = useRef(false);
+
   const autoplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const normalizeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const applyOffset = useCallback((withTransition: boolean) => {
-    const track = trackRef.current;
-    if (!track) return;
-    track.style.transition = withTransition
-      ? `transform ${TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
-      : "none";
-    track.style.transform = `translateX(${offset.current}px)`;
-  }, []);
-
-  // Keeps offset within [-2*SET_WIDTH, -SET_WIDTH] so a full loop of buffer
-  // cards always exists on both sides, wrapping invisibly once crossed.
+  // Keeps x within [-2*SET_WIDTH, -SET_WIDTH] so a full loop of buffer cards
+  // always exists on both sides. Only called once a drag step or a spring has
+  // actually settled (never mid-animation) so it can never fight the engine
+  // currently driving `x`.
   const normalize = useCallback(() => {
-    if (offset.current <= -2 * SET_WIDTH) {
-      offset.current += SET_WIDTH;
-      applyOffset(false);
-    } else if (offset.current > -SET_WIDTH) {
-      offset.current -= SET_WIDTH;
-      applyOffset(false);
-    }
-  }, [applyOffset]);
-
-  const scheduleNormalize = useCallback(() => {
-    if (normalizeTimer.current) clearTimeout(normalizeTimer.current);
-    normalizeTimer.current = setTimeout(normalize, TRANSITION_MS + 20);
-  }, [normalize]);
-
-  const advance = useCallback(() => {
-    offset.current -= STEP;
-    applyOffset(true);
-    scheduleNormalize();
-  }, [applyOffset, scheduleNormalize]);
+    const value = x.get();
+    if (value <= -2 * SET_WIDTH) x.set(value + SET_WIDTH);
+    else if (value > -SET_WIDTH) x.set(value - SET_WIDTH);
+  }, [x]);
 
   const stopAutoplay = useCallback(() => {
     if (autoplayTimer.current) {
@@ -135,69 +137,122 @@ export function FeatureRing() {
     }
   }, []);
 
+  // Runs once a spring settles: clears the in-flight marker (so the
+  // change-listener guard below isn't permanently disabled after the first
+  // animation) and normalizes the wrap, safe now that nothing else is
+  // driving `x`.
+  const settle = useCallback(() => {
+    controlsRef.current = null;
+    normalize();
+  }, [normalize]);
+
+  const advance = useCallback(() => {
+    controlsRef.current?.stop();
+    controlsRef.current = animate(x, x.get() - STEP, {
+      type: "spring",
+      bounce: 0, // no gesture behind this one, so no overshoot
+      duration: 0.6,
+    });
+    controlsRef.current.then(settle);
+  }, [x, settle]);
+
   const startAutoplay = useCallback(() => {
     stopAutoplay();
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion) return;
     autoplayTimer.current = setInterval(advance, AUTOPLAY_INTERVAL_MS);
-  }, [advance, stopAutoplay]);
+  }, [advance, stopAutoplay, prefersReducedMotion]);
 
   useEffect(() => {
-    applyOffset(false);
+    x.set(-SET_WIDTH);
     startAutoplay();
     return () => {
       stopAutoplay();
+      controlsRef.current?.stop();
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
-      if (normalizeTimer.current) clearTimeout(normalizeTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prefersReducedMotion]);
+
+  // Belt-and-suspenders: catches any wrap crossed by a means other than
+  // advance()/endDrag()'s own settle-then-normalize (there currently isn't
+  // one, but a bare .set() slipping past unnoticed would show blank buffer).
+  useMotionValueEvent(x, "change", (latest) => {
+    if (draggingRef.current || controlsRef.current) return;
+    if (latest <= -2 * SET_WIDTH || latest > -SET_WIDTH) normalize();
+  });
 
   const scheduleResume = () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
     resumeTimer.current = setTimeout(startAutoplay, AUTOPLAY_RESUME_DELAY_MS);
   };
 
-  // Pauses only for an actual drag in progress — not merely for the pointer
-  // resting nearby, which previously stalled autoplay for as long as the
-  // user's cursor sat anywhere over the carousel (i.e. whenever they were
-  // actually looking at it).
+  // Pauses only for an actual drag in progress, not merely for the pointer
+  // resting nearby.
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    dragging.current = true;
-    lastX.current = e.clientX;
+    draggingRef.current = true;
     stopAutoplay();
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    // Interrupt cleanly: stop whatever spring is currently driving x (an
+    // autoplay advance or a previous drag's settle) so this drag starts from
+    // the live presentation value, not the animation's target.
+    controlsRef.current?.stop();
+    controlsRef.current = null;
+    historyRef.current = [{ t: e.timeStamp, x: e.clientX }];
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current || lastX.current === null) return;
-    offset.current += e.clientX - lastX.current;
-    lastX.current = e.clientX;
-    applyOffset(false);
+    if (!draggingRef.current) return;
+    const last = historyRef.current[historyRef.current.length - 1];
+    x.set(x.get() + (e.clientX - last.x));
+    historyRef.current.push({ t: e.timeStamp, x: e.clientX });
+    // Only need enough recent samples to get a release velocity; trim to the
+    // last ~120ms so an old, slower part of a long drag doesn't dilute it.
+    const cutoff = e.timeStamp - 120;
+    while (historyRef.current.length > 2 && historyRef.current[0].t < cutoff) {
+      historyRef.current.shift();
+    }
     normalize();
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
-    dragging.current = false;
-    lastX.current = null;
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
-    offset.current = Math.round(offset.current / STEP) * STEP;
-    applyOffset(true);
-    scheduleNormalize();
+
+    const history = historyRef.current;
+    const first = history[0];
+    const last = history[history.length - 1];
+    const dt = last.t - first.t;
+    const velocity = dt > 0 ? ((last.x - first.x) / dt) * 1000 : 0; // px/s
+
+    const projected = x.get() + (prefersReducedMotion ? 0 : project(velocity));
+    const target = Math.round(projected / STEP) * STEP;
+
+    if (prefersReducedMotion) {
+      x.set(target);
+      normalize();
+    } else {
+      // Bounce scales with how hard the release was flicked; a slow
+      // deliberate drag settles with none.
+      const bounce = Math.min(0.3, Math.abs(velocity) / 4000);
+      controlsRef.current = animate(x, target, { type: "spring", bounce, duration: 0.5, velocity });
+      controlsRef.current.then(settle);
+    }
+
     scheduleResume();
   };
 
   return (
     // Breaks out of the max-w-6xl parent column to use the full viewport
-    // width — a fixed-width card strip inside that narrow column left most
+    // width - a fixed-width card strip inside that narrow column left most
     // of a wide screen empty and showed barely more than three cards.
     <div className="relative left-1/2 w-screen -translate-x-1/2 select-none overflow-hidden px-6 md:px-16">
-      <div
-        ref={trackRef}
+      <motion.div
         className="flex cursor-grab touch-pan-y gap-8 active:cursor-grabbing"
+        style={{ x }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
@@ -206,7 +261,7 @@ export function FeatureRing() {
         {[...features, ...features, ...features].map((feature, i) => (
           <FeatureCard key={`${feature.title}-${i}`} feature={feature} />
         ))}
-      </div>
+      </motion.div>
       <p className="pointer-events-none mt-4 text-center text-sm text-muted-foreground">Drag to browse</p>
     </div>
   );
