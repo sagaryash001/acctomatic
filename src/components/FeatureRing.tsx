@@ -152,20 +152,20 @@ export function FeatureRing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pauseForInteraction = () => {
-    stopAutoplay();
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-  };
-
   const scheduleResume = () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
     resumeTimer.current = setTimeout(startAutoplay, AUTOPLAY_RESUME_DELAY_MS);
   };
 
+  // Pauses only for an actual drag in progress — not merely for the pointer
+  // resting nearby, which previously stalled autoplay for as long as the
+  // user's cursor sat anywhere over the carousel (i.e. whenever they were
+  // actually looking at it).
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = true;
     lastX.current = e.clientX;
-    pauseForInteraction();
+    stopAutoplay();
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -191,11 +191,10 @@ export function FeatureRing() {
   };
 
   return (
-    <div
-      className="relative mx-auto w-full select-none overflow-hidden"
-      onPointerEnter={pauseForInteraction}
-      onPointerLeave={scheduleResume}
-    >
+    // Breaks out of the max-w-6xl parent column to use the full viewport
+    // width — a fixed-width card strip inside that narrow column left most
+    // of a wide screen empty and showed barely more than three cards.
+    <div className="relative left-1/2 w-screen -translate-x-1/2 select-none overflow-hidden px-6 md:px-16">
       <div
         ref={trackRef}
         className="flex cursor-grab touch-pan-y gap-8 active:cursor-grabbing"
