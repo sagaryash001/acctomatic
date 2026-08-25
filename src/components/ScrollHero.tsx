@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Badge, LinkButton } from "@/components/ui";
 import { fadeInUp, stagger } from "@/lib/motion";
 
@@ -132,6 +132,12 @@ function drawFrameCover(
 }
 
 export function ScrollHero() {
+  // A scroll-hijacked pinned hero is exactly the kind of effect
+  // prefers-reduced-motion exists for. Both effects below no-op when this is
+  // true, and the component renders a static, non-pinned fallback instead of
+  // the scroll-driven experience (see the early return before the main JSX).
+  const prefersReducedMotion = useReducedMotion();
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -155,7 +161,7 @@ export function ScrollHero() {
   // because React StrictMode's dev-only double-invoke has no cleanup to
   // cancel this one — without the guard it would fire all 168 requests twice.
   useEffect(() => {
-    if (hasStartedLoadingRef.current) return;
+    if (prefersReducedMotion || hasStartedLoadingRef.current) return;
     hasStartedLoadingRef.current = true;
     const images: HTMLImageElement[] = [];
     for (let i = 0; i < FRAME_COUNT; i++) {
@@ -171,6 +177,7 @@ export function ScrollHero() {
   }, []);
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
     let raf = 0;
 
     const tick = () => {
@@ -238,7 +245,38 @@ export function ScrollHero() {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [prefersReducedMotion]);
+
+  if (prefersReducedMotion) {
+    return (
+      <section className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-hero-ink px-6 py-24 text-center">
+        <img
+          src={FRAME_PATH(0)}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-hero-ink/45 via-hero-ink/10 to-hero-ink/60" />
+        <div className="relative flex flex-col items-center gap-6">
+          <Badge className="border-hero-cream/30 bg-hero-ink/70 text-hero-cream [&_span:last-child]:text-hero-cream">
+            Acctomatic · Document Autopilot
+          </Badge>
+          <h1 className="max-w-3xl text-[2.5rem] leading-[1.08] tracking-[-0.02em] text-white sm:text-6xl md:text-[4.5rem]">
+            Straight through the lobby.
+            <br />
+            Straight into your ledger.
+          </h1>
+          <p className="max-w-xl text-base leading-relaxed text-hero-cream sm:text-lg">
+            AI that reads invoices and receipts, checks the numbers, and books them
+            automatically. Your team stops doing manual data entry.
+          </p>
+          <LinkButton href="#get-started" variant="primary" size="lg" className="mt-2">
+            Book a Demo
+          </LinkButton>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section ref={wrapperRef} className="relative h-[650vh]">
@@ -275,7 +313,7 @@ export function ScrollHero() {
               className="max-w-xl text-base leading-relaxed text-hero-cream sm:text-lg"
             >
               AI that reads invoices and receipts, checks the numbers, and books them
-              automatically — so your team stops doing manual data entry.
+              automatically. Your team stops doing manual data entry.
             </motion.p>
           </motion.div>
         </div>
@@ -287,7 +325,7 @@ export function ScrollHero() {
         >
           <p className="max-w-sm text-center text-lg leading-relaxed text-hero-cream sm:text-xl md:max-w-md md:text-right">
             Acctomatic connects to your inbox, Drive, and accounting software. Every invoice,
-            receipt, and statement is read the moment it arrives — no forwarding, no uploading,
+            receipt, and statement is read the moment it arrives. No forwarding, no uploading,
             no manual entry.
           </p>
         </div>
@@ -299,7 +337,7 @@ export function ScrollHero() {
         >
           <p className="max-w-sm text-center text-lg leading-relaxed text-hero-cream sm:text-xl md:max-w-md md:text-left">
             Each document is checked against the numbers, the math, and your own rules. What
-            matches books itself. What doesn't gets flagged for a quick look — not a full
+            matches books itself. What doesn't gets flagged for a quick look, not a full
             review.
           </p>
         </div>
